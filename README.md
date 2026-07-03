@@ -36,6 +36,13 @@ pip install .
 pip install -e .
 ```
 
+## Gerando e instalando wheel
+
+```bash
+python -m build 
+pip install db_extractor-py3-none-any.whl
+```
+
 ## Dependências
 
 A biblioteca instala automaticamente:
