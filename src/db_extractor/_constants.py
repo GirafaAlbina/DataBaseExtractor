@@ -1,0 +1,12 @@
+# Constants
+DEFAULT_CHUNKSIZE = None
+
+CONSULTA_EXTENSIONS = (".sql", ".vql")
+OUTPUT_EXTENSIONS = (".csv", ".xlsx", ".parquet")
+DEFAULT_CSV_SEPARATOR = ";"
+
+MAX_EXCEL_ROWS = 1048575
+DEFAULT_SHEET_NAME = "Dados"
+
+DEFAULT_ENCODING = "utf-8"
+FALLBACK_ENCODING = "latin-1"

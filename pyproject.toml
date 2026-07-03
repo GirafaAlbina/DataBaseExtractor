@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "db_extractor"
+version = "1.2.2"
+description = "Extração de dados Oracle e Denodo para CSV, XLSX e Parquet."
+readme = "README.md"
+requires-python = ">=3.10"
+
+authors = [
+    {name = "GirafaAlbina"}
+]
+
+dependencies = [
+    "pandas>=2.2.0",
+    "sqlalchemy>=2.0.0",
+    "oracledb>=2.0.0",
+    "psycopg2>=2.9.0",
+    "openpyxl>=3.1.0",
+    "pyarrow>=18.0.0",
+    "polars>=1.0"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+
+# Build / Distribuição
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Wheels
+*.whl
+*.bat
+
+# Testes
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+
+# VSCode
+.vscode/
+
+# JetBrains
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Configurações locais
+config.json
+*.config.json
+
+# Saídas de extração
+*.csv
+*.xlsx
+*.xls
+*.parquet
+*.feather
+
+# Arquivos temporários
+*.tmp
+*.temp
+*.bak
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# MacOS
+.DS_Store
+
+# Oracle
+*.dmp
+
+# Relatórios temporários
+output/
+saida/
+exports/
+temp/
+
+# Cache
+.cache/
+
+tests/

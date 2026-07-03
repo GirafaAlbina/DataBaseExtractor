@@ -1,0 +1,30 @@
+{
+    "CIS": {
+        "user": "user",
+        "password": "senha",
+        "host": "host",
+		"port": "1521",
+		"service": "service"
+    },
+    "ORCA": {
+        "user": "user",
+        "password": "senha",
+        "host": "host",
+		"port": "1521",
+		"service": "service"
+    },
+	"GEO": {
+		"user": "user",
+		"password": "senha",
+		"host" : "host",
+		"port": "1521",
+		"service": "service"
+	},
+	"Denodo": {
+		"user": "user",
+		"password": "senha",
+		"host": "host",
+		"port": "9996",
+		"database": "database"
+	}
+}
