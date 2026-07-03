@@ -1,19 +1,19 @@
 {
-    "CIS": {
+    "ORACLE_1": {
         "user": "user",
         "password": "senha",
         "host": "host",
 		"port": "1521",
 		"service": "service"
     },
-    "ORCA": {
+    "ORACLE_2": {
         "user": "user",
         "password": "senha",
         "host": "host",
 		"port": "1521",
 		"service": "service"
     },
-	"GEO": {
+	"ORACLE_3": {
 		"user": "user",
 		"password": "senha",
 		"host" : "host",

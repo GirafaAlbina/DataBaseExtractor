@@ -91,7 +91,7 @@ Exemplo:
 
 ```json
 {
-    "CIS": {
+    "ORACLE_1": {
         "user": "usuario",
         "password": "senha",
         "host": "host",
@@ -99,7 +99,7 @@ Exemplo:
         "service": "service"
     },
 
-    "GEO": {
+    "ORACLE_2": {
         "user": "usuario",
         "password": "senha",
         "host": "host",
@@ -107,7 +107,7 @@ Exemplo:
         "service": "service"
     },
 
-    "ORCA": {
+    "ORACLE_3": {
         "user": "usuario",
         "password": "senha",
         "host": "host",
@@ -174,7 +174,7 @@ print(db_extractor.__description__)
 from db_extractor import exportar_consulta
 
 resultado = exportar_consulta(
-    banco="CIS",
+    banco="ORACLE_1",
     consulta="Municipios.sql",
     saida="Municipios.csv",
     separador=";"
@@ -190,7 +190,7 @@ print(resultado)
 from db_extractor import exportar_consulta
 
 resultado = exportar_consulta(
-    banco="CIS",
+    banco="ORACLE_1",
     consulta="Municipios.sql",
     saida="Municipios.xlsx",
     nome_planilha="Municipios"
@@ -206,7 +206,7 @@ print(resultado)
 from db_extractor import exportar_consulta
 
 resultado = exportar_consulta(
-    banco="CIS",
+    banco="ORACLE_1",
     consulta="Municipios.sql",
     saida="Municipios.parquet"
 )
@@ -221,7 +221,7 @@ print(resultado)
 from db_extractor import consultar_dataframe
 
 df = consultar_dataframe(
-    banco="CIS",
+    banco="ORACLE_1",
     consulta="Municipios.sql",
     parametros={
         "UF": "PR"
@@ -238,13 +238,13 @@ Para consultas grandes:
 
 ```python
 resultado = exportar_consulta(
-    banco="CIS",
+    banco="ORACLE_1",
     consulta="Municipios.sql",
     saida="Municipios.parquet",
     chunksize=50000
 )
 for chunk in consultar_dataframe(
-    banco="CIS",
+    banco="ORACLE_1",
     consulta="Municipios.sql",
     chunksize=50000
 ):
@@ -268,7 +268,7 @@ Execução:
 
 ```python
 resultado = exportar_consulta(
-    banco="CIS",
+    banco="ORACLE_1",
     consulta="Clientes.sql",
     saida="Clientes.xlsx",
     parametros={
@@ -290,7 +290,7 @@ Execução:
 
 ```python
 df = consultar_dataframe(
-    banco="GEO",
+    banco="ORACLE_2",
     consulta="Municipios.sql",
     parametros={
         "CODIGOS": [
@@ -318,7 +318,7 @@ Exemplo:
 
 ```python
 resultado = exportar_consulta(
-    banco="CIS",
+    banco="ORACLE_1",
     consulta="GrandesVolumes.sql",
     saida="GrandesVolumes.xlsx",
     nome_planilha="Dados"
@@ -353,7 +353,7 @@ Saída:
 ExportResult(
     arquivo='Municipios.xlsx',
     formato='xlsx',
-    banco='CIS',
+    banco='ORACLE_1',
     consulta='Municipios.sql',
     linhas=2534871,
     abas=3,
@@ -401,7 +401,7 @@ Configuração:
 
 ```json
 {
-    "GEO": {
+    "ORACLE_2": {
         "user": "usuario",
         "password": "senha",
         "host": "host",
