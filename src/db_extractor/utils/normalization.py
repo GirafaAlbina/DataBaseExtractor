@@ -2,7 +2,7 @@
 def normalizar_banco(banco):
     if banco is None:
         return None
-    return banco.strip().upper()
+    return banco.strip()
 
 
 def normalizar_consulta(consulta):
