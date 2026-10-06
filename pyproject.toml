@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "db_extractor"
-version = "1.2.2"
+version = "1.2.3"
 description = "Extração de dados Oracle e Denodo para CSV, XLSX e Parquet."
 readme = "README.md"
 requires-python = ">=3.10"

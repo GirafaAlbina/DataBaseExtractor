@@ -4,7 +4,7 @@ Informações de versão da biblioteca.
 
 __title__ = "db_extractor"
 
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 
 __author__ = "GirafaAlbina"
 

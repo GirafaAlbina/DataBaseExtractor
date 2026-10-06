@@ -17,6 +17,16 @@ from .utils import (normalizar_banco, normalizar_consulta, normalizar_saida,
                     memoria_dataframe, imprimir_dataframe)
 
 
+def _fechar_conexao(conexao):
+    if conexao is None:
+        return
+
+    if hasattr(conexao, "dispose"):
+        conexao.dispose()
+    elif hasattr(conexao, "close"):
+        conexao.close()
+
+
 def _monitorar_chunks(chunks):
     total_linhas = 0
     numero_chunk = 0
@@ -134,11 +144,7 @@ def exportar_consulta(
         )
 
     finally:
-        if engine is not None:
-            try:
-                engine.dispose()
-            except Exception:
-                pass
+        _fechar_conexao(engine)
 
 
 def consultar_dataframe(
@@ -243,12 +249,10 @@ def consultar_dataframe(
                         yield chunk
 
             finally:
-                if hasattr(db_engine,"dispose"):
-                    db_engine.dispose()
+                _fechar_conexao(db_engine)
 
         return generator()
 
     except Exception:
-        if hasattr(db_engine,"dispose"):
-            db_engine.dispose()
+        _fechar_conexao(db_engine)
         raise
