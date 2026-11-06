@@ -31,5 +31,10 @@ package-dir = {"" = "src"}
 url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple"
 default = true
 
+[dependency-groups]
+dev = [
+    "build>=1.6.1",
+]
+
 [tool.setuptools.packages.find]
 where = ["src"]
