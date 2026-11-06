@@ -70,6 +70,7 @@ db_extractor/
 │   └── db_extractor/
 │       │
 │       ├── extractor.py
+│       ├── credentials.py
 │       ├── _config.py
 │       ├── _constants.py
 │       ├── _exceptions.py
@@ -130,12 +131,6 @@ Exemplo:
 
 ---
 
-## Segurança e Gerenciamento de Senhas (Keyring)
-
-Para evitar senhas gravadas em texto plano no `config.json`, a biblioteca suporta o armazenamento seguro através do **keyring** (Windows Credential Locker).
-
----
-
 ## Funções de Extração
 
 ### Funções Principais
@@ -164,9 +159,12 @@ def consultar_dataframe(
 )
 ```
 
+### Funções de credeciais
+
 * Função de cadastro de credencial
 * Função de alteração de senha de um cadastro já existente
 * Função de remoção de uma credencial
+* Função de listagem de credenciais
 
 ```python
 def cadastrar_credencial(
@@ -185,6 +183,8 @@ def remover_credencial(
     banco,                  *Nome do banco no config
     usuario=None            Usuário (opcional, busca do config.json)
 )
+
+def listar_credenciais()
 ```
 
 ### Versionamento
@@ -195,6 +195,30 @@ print(db_extractor.__title__)
 print(db_extractor.__author__)
 print(db_extractor.__description__)
 ```
+
+---
+
+## Segurança e Gerenciamento de Senhas (Keyring)
+
+Para evitar senhas gravadas em texto plano no `config.json`, a biblioteca suporta o armazenamento seguro através do **keyring** (Windows Credential Locker).
+O cofre armazena as credenciais isoladas por banco utilizando a convenção de serviço db_extractor_<NOME_BANCO> associada ao respectivo usuário.
+
+Não é obrigatório cadastrar a senha previamente:
+
+* Ao executar exportar_consulta() ou consultar_dataframe(), a biblioteca busca a credencial no cofre do sistema.
+* Caso a credencial não exista, o terminal solicitará a senha de forma oculta com máscara (*) e a gravará no cofre automaticamente.
+* Nas execuções seguintes, a autenticação ocorre de forma silenciosa e transparente.
+
+Trava de Proteção Contra Bloqueio de Conta:
+
+* Para evitar o bloqueio de usuários no banco de dados corporativo (erros como ORA-28000: the account is locked)
+* Antes de processar consultas pesadas, a biblioteca realiza um teste atômico prévio de autenticação com timeout reduzido (SELECT 1).
+
+Se a senha estiver incorreta:
+
+* A credencial inválida é imediatamente expurgada do cofre para evitar repetições involuntárias.
+* O terminal concede uma única tentativa interativa de correção.
+* Se a nova senha também falhar, a execução é interrompida imediatamente, impedindo sucessivas tentativas que levariam ao bloqueio do usuário.
 
 ---
 

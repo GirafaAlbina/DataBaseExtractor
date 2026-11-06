@@ -1,28 +1,24 @@
 {
     "ORACLE_1": {
         "user": "user",
-        "password": "senha",
         "host": "host",
 		"port": "1521",
 		"service": "service"
     },
     "ORACLE_2": {
         "user": "user",
-        "password": "senha",
         "host": "host",
 		"port": "1521",
 		"service": "service"
     },
 	"ORACLE_3": {
 		"user": "user",
-		"password": "senha",
 		"host" : "host",
 		"port": "1521",
 		"service": "service"
 	},
 	"Denodo": {
 		"user": "user",
-		"password": "senha",
 		"host": "host",
 		"port": "9996",
 		"database": "database"
