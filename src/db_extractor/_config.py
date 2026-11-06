@@ -18,28 +18,46 @@ _CONFIG_VALIDADAS_CACHE = {}
 _BANCOS_BLOQUEADOS_SESSAO = set()
 
 
-def localizar_config():
-    env_path = os.environ.get("DB_EXPORT_CONFIG")
-    if env_path and os.path.exists(env_path):
-        return env_path
+def carregar_config(caminho_arquivo=None):
+    """
+    Carrega o arquivo JSON de configuração.
+    - Se caminho_arquivo for informado, carrega diretamente dele.
+    - Se for None, tenta localizar automaticamente (env var, script_dir, cwd).
+    """
+    if caminho_arquivo:
+        if not os.path.exists(caminho_arquivo):
+            print(f"[db_extractor] Aviso: Arquivo indicado '{caminho_arquivo}' não encontrado. Seguindo execução...")
+            return {}
+        caminho = caminho_arquivo
+    else:
+        caminho = localizar_config()
 
-    if sys.argv and sys.argv[0]:
-        script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-        config_path = os.path.join(script_dir, "config.json")
-        if os.path.exists(config_path):
-            return config_path
+    if not caminho:
+        print("[db_extractor] Aviso: Arquivo config.json não encontrado. Seguindo execução...")
+        return {}
 
-    cwd_config = os.path.join(os.getcwd(), "config.json")
-    if os.path.exists(cwd_config):
-        return cwd_config
+    try:
+        with open(caminho, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[db_extractor] Aviso: Falha ao ler arquivo de configuração '{caminho}' ({e}). Seguindo execução...")
+        return {}
 
-    raise ConfigNaoEncontrado("config.json não encontrado.")
 
+def obter_config_banco(nome_banco, arquivo_config=None):
+    """
+    Recupera a configuração do banco.
+    Aceita arquivo_config opcional.
+    """
+    config = carregar_config(caminho_arquivo=arquivo_config)
+    banco_procurado = nome_banco.strip().upper()
 
-def carregar_config():
-    caminho = localizar_config()
-    with open(caminho, "r", encoding="utf-8") as f:
-        return json.load(f)
+    for nome_config, cfg in config.items():
+        if nome_config.upper() == banco_procurado:
+            return _validar_e_proteger_credencial(nome_config, cfg)
+
+    origem = f"arquivo '{arquivo_config}'" if arquivo_config else "config.json ausente ou banco não declarado"
+    raise BancoNaoEncontrado(f"Banco '{nome_banco}' não localizado nas configurações ({origem}).")
 
 
 def _pedir_senha_terminal(nome_banco: str, usuario: str, motivo: str = "") -> str:

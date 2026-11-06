@@ -51,7 +51,8 @@ def exportar_consulta(
     chunksize=None,
     parametros=None,
     nome_planilha=DEFAULT_SHEET_NAME,
-    monitorar=True
+    monitorar=True,
+    arquivo_config=None
 ):
     """
     Executa uma consulta SQL/VQL e exporta o resultado.
@@ -60,10 +61,13 @@ def exportar_consulta(
     ----------
     banco : str                 - Nome do banco cadastrado no config.json.
     consulta : str              - Caminho do arquivo .sql ou .vql.
-    saida : str                 - Arquivo de saída (.csv ou .xlsx).
+    saida : str                 - Arquivo de saída (.csv, .xlsx ou .parquet).
+    separador : str             - Separador para arquivos CSV.
     chunksize : int | None      - Tamanho dos lotes para leitura.
     parametros : dict | None    - Parâmetros da consulta.
     nome_planilha : str         - Nome base da planilha Excel.
+    monitorar : bool            - Exibir progresso da execução.
+    arquivo_config : str | None - Caminho de um JSON de configuração alternativo.
 
     Returns
     -------
@@ -86,8 +90,8 @@ def exportar_consulta(
     engine = None
 
     try:
-
-        cfg = obter_config_banco(banco)
+        # Repassa arquivo_config para a resolução
+        cfg = obter_config_banco(banco, arquivo_config=arquivo_config)
         engine = criar_conexao(cfg)
         sql = carregar_consulta(consulta)
         chunks = executar_consulta(
@@ -98,7 +102,7 @@ def exportar_consulta(
         )
         if chunksize is None:
             chunks = [chunks]
-            
+
         if monitorar and chunksize is not None:
             chunks = _monitorar_chunks(chunks)
 
@@ -140,7 +144,7 @@ def exportar_consulta(
             linhas=linhas,
             abas=abas,
             chunksize=chunksize,
-            tempo_execucao=round(fim - inicio,2)
+            tempo_execucao=round(fim - inicio, 2)
         )
 
     finally:
@@ -153,10 +157,11 @@ def consultar_dataframe(
     parametros=None,
     chunksize=None,
     dataframe="pandas",
-    monitorar=True
+    monitorar=True,
+    arquivo_config=None
 ):
     """
-    Executa uma consulta SQL/VQL.
+    Executa uma consulta SQL/VQL e retorna DataFrame Pandas ou Polars.
 
     Parameters
     ----------
@@ -164,11 +169,13 @@ def consultar_dataframe(
     consulta : str              - Arquivo SQL ou VQL.
     parametros : dict | None    - Parâmetros da consulta.
     chunksize : int | None      - Tamanho dos lotes.
+    dataframe : str             - 'pandas' ou 'polars'.
+    monitorar : bool            - Exibir progresso da execução.
+    arquivo_config : str | None - Caminho de um JSON de configuração alternativo.
 
     Returns
     -------
-    pandas.DataFrame            - Quando chunksize=None.
-    Generator[pandas.DataFrame] - Quando chunksize é informado.
+    pandas.DataFrame | polars.DataFrame | Generator
     """
 
     banco = normalizar_banco(banco)
@@ -181,11 +188,12 @@ def consultar_dataframe(
     dataframe = dataframe.lower()
     if dataframe not in ("pandas", "polars"):
         raise ValueError("dataframe deve ser 'pandas' ou 'polars'")
-    
+
     inicio = perf_counter()
-    cfg = obter_config_banco(banco)
+    # Repassa arquivo_config para a resolução
+    cfg = obter_config_banco(banco, arquivo_config=arquivo_config)
     db_engine = criar_conexao(cfg)
-    
+
     try:
         sql = carregar_consulta(consulta)
         if chunksize is None:
@@ -197,10 +205,10 @@ def consultar_dataframe(
             )
             if resultado is None:
                 return None
-            
+
             if dataframe == "polars":
                 import polars as pl
-                resultado_polars = (pl.from_pandas(resultado))
+                resultado_polars = pl.from_pandas(resultado)
                 fim = perf_counter()
                 if monitorar:
                     imprimir_dataframe(
@@ -231,7 +239,7 @@ def consultar_dataframe(
                 ):
                     numero_chunk += 1
                     linhas_chunk = len(chunk)
-                    total_linhas += (linhas_chunk)
+                    total_linhas += linhas_chunk
                     if monitorar:
                         imprimir_chunk(
                             numero_chunk=numero_chunk,
@@ -243,9 +251,7 @@ def consultar_dataframe(
                     if dataframe == "polars":
                         import polars as pl
                         yield pl.from_pandas(chunk)
-
                     else:
-
                         yield chunk
 
             finally:

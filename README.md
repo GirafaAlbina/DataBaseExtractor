@@ -147,7 +147,8 @@ def exportar_consulta(
     chunksize=None,         Extração por chunks
     parametros=None,        Parâmetros da consulta SQL
     nome_planilha="Dados",  Nome da planliha base, para arquivos xlsx
-    monitorar=True          Habilitar Progresso True, False
+    monitorar=True,         Habilitar Progresso True, False
+    arquivo_config=None     Caminho de arquivo json do config
 )
 def consultar_dataframe(
     banco,                  *Nome do banco no config
@@ -155,7 +156,8 @@ def consultar_dataframe(
     chunksize=None,         Extração por chunks
     parametros=None,        Parâmetros da consulta SQL
     dataframe="pandas",     Bibliteca que retorna o df polars, pandas
-    monitorar=True          Habilitar Progresso True, False
+    monitorar=True,         Habilitar Progresso True, False
+    arquivo_config=None     Caminho de arquivo json do config
 )
 ```
 
