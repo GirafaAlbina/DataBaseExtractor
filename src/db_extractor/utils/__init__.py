@@ -9,6 +9,7 @@ from .monitor import (memoria_dataframe_mb, formatar_tamanho, memoria_dataframe,
                       memoria_dataframe_formatada, tamanho_arquivo,
                       tamanho_arquivo_formatado, timestamp, imprimir_chunk,
                       imprimir_dataframe, imprimir_exportacao)
+from .terminal import ler_senha_com_mascara
 
 
 __all__ = [
@@ -34,5 +35,6 @@ __all__ = [
     "timestamp",
     "imprimir_chunk",
     "imprimir_dataframe",
-    "imprimir_exportacao"
+    "imprimir_exportacao",
+    "ler_senha_com_mascara"
 ]

@@ -5,10 +5,10 @@ class DBExtractorError(Exception):
 class BancoNaoEncontrado(DBExtractorError, KeyError):
     pass
 
-
 # FileNotFoundError
 class ConsultaNaoEncontrada(DBExtractorError, FileNotFoundError):
     pass
+
 class ConfigNaoEncontrado(DBExtractorError, FileNotFoundError):
     pass
 
@@ -16,11 +16,21 @@ class ConfigNaoEncontrado(DBExtractorError, FileNotFoundError):
 # ValueError
 class ConexaoNaoIdentificado(DBExtractorError, ValueError):
     pass
+
 class FormatoConsultaInvalido(DBExtractorError, ValueError):
     pass
+
 class FormatoSaidaInvalido(DBExtractorError, ValueError):
     pass
+
 class ChunksizeInvalido(DBExtractorError, ValueError):
     pass
+
 class NomePlanilhaInvalido(DBExtractorError, ValueError):
+    pass
+
+class SenhaNaoEncontrada(DBExtractorError, ValueError):
+    pass
+
+class CredencialInvalidaError(DBExtractorError, ValueError):
     pass

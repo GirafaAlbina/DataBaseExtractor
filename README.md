@@ -22,28 +22,28 @@ Biblioteca Python para extração de dados de Oracle e Denodo com exportação p
 
 ---
 
-# Instalação
+## Instalação
 
-## Instalação local
+### Instalação local
 
 ```bash
 pip install .
 ```
 
-## Instalação em modo desenvolvimento
+### Instalação em modo desenvolvimento
 
 ```bash
 pip install -e .
 ```
 
-## Gerando e instalando wheel
+### Gerando e instalando wheel
 
 ```bash
 python -m build 
 pip install db_extractor-py3-none-any.whl
 ```
 
-## Dependências
+### Dependências
 
 A biblioteca instala automaticamente:
 
@@ -57,7 +57,7 @@ A biblioteca instala automaticamente:
 
 ---
 
-# Estrutura do Projeto
+## Estrutura do Projeto
 
 ```text
 db_extractor/
@@ -86,7 +86,7 @@ db_extractor/
 
 ---
 
-# Configuração
+## Configuração
 
 A biblioteca procura o arquivo `config.json` na seguinte ordem:
 
@@ -100,7 +100,6 @@ Exemplo:
 {
     "ORACLE_1": {
         "user": "usuario",
-        "password": "senha",
         "host": "host",
         "port": "1521",
         "service": "service"
@@ -108,7 +107,6 @@ Exemplo:
 
     "ORACLE_2": {
         "user": "usuario",
-        "password": "senha",
         "host": "host",
         "port": "1521",
         "service": "service"
@@ -116,7 +114,6 @@ Exemplo:
 
     "ORACLE_3": {
         "user": "usuario",
-        "password": "senha",
         "host": "host",
         "port": "1521",
         "service": "service"
@@ -124,7 +121,6 @@ Exemplo:
 
     "DENODO": {
         "user": "usuario",
-        "password": "senha",
         "host": "host",
         "port": "9996",
         "database": "database"
@@ -134,9 +130,15 @@ Exemplo:
 
 ---
 
-# Funções de Extração
+## Segurança e Gerenciamento de Senhas (Keyring)
 
-## Funções Principais
+Para evitar senhas gravadas em texto plano no `config.json`, a biblioteca suporta o armazenamento seguro através do **keyring** (Windows Credential Locker).
+
+---
+
+## Funções de Extração
+
+### Funções Principais
 
 * Função de exportação gera o arquivo de saída
 * Função que retorna o dataframe polars e pandas
@@ -162,7 +164,30 @@ def consultar_dataframe(
 )
 ```
 
-## Versionamento
+* Função de cadastro de credencial
+* Função de alteração de senha de um cadastro já existente
+* Função de remoção de uma credencial
+
+```python
+def cadastrar_credencial(
+    banco,                  *Nome do banco no config
+    usuario=None,           Usuário (opcional, busca do config.json)
+    senha=None              Senha (opcional, solicita no terminal)
+)
+
+def alterar_senha(
+    banco,                  *Nome do banco no config
+    usuario=None,           Usuário (opcional, busca do config.json)
+    nova_senha=None         Nova senha (opcional, solicita no terminal)
+)
+
+def remover_credencial(
+    banco,                  *Nome do banco no config
+    usuario=None            Usuário (opcional, busca do config.json)
+)
+```
+
+### Versionamento
 
 ```python
 print(db_extractor.__version__)
@@ -173,9 +198,9 @@ print(db_extractor.__description__)
 
 ---
 
-# Uso Básico
+## Uso Básico
 
-## Exportação para CSV
+### Exportação para CSV
 
 ```python
 from db_extractor import exportar_consulta
@@ -191,7 +216,7 @@ print(resultado)
 
 ---
 
-## Exportação para XLSX
+### Exportação para XLSX
 
 ```python
 from db_extractor import exportar_consulta
@@ -207,7 +232,7 @@ print(resultado)
 
 ---
 
-## Exportação para Parquet
+### Exportação para Parquet
 
 ```python
 from db_extractor import exportar_consulta
@@ -222,7 +247,7 @@ print(resultado)
 
 ---
 
-## Exportação DataFrame
+### Exportação DataFrame
 
 ```python
 from db_extractor import consultar_dataframe
@@ -239,7 +264,7 @@ print(df.head())
 
 ---
 
-# Uso com Chunks
+### Uso com Chunks
 
 Para consultas grandes:
 
@@ -260,7 +285,7 @@ for chunk in consultar_dataframe(
 
 ---
 
-# Uso com Parâmetros
+### Uso com Parâmetros
 
 Consulta SQL:
 
@@ -311,7 +336,7 @@ df = consultar_dataframe(
 
 ---
 
-# Excel e Limite de Linhas
+## Excel e Limite de Linhas
 
 O Excel suporta no máximo:
 
@@ -344,7 +369,7 @@ Dados_3
 
 ---
 
-# Objeto de Retorno
+## Objeto de Retorno
 
 A função retorna um objeto `ExportResult`.
 
@@ -371,7 +396,7 @@ ExportResult(
 
 ---
 
-# Exceções
+## Exceções
 
 A biblioteca fornece exceções específicas.
 
@@ -400,9 +425,9 @@ Exceções disponíveis:
 
 ---
 
-# Bancos Suportados
+## Bancos Suportados
 
-## Oracle
+### Oracle
 
 Configuração:
 
@@ -420,7 +445,7 @@ Configuração:
 
 ---
 
-## Denodo
+### Denodo
 
 Configuração:
 
@@ -438,6 +463,6 @@ Configuração:
 
 ---
 
-# Licença
+## Licença
 
 Uso interno corporativo COPEL.

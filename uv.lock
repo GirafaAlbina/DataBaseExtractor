@@ -15,6 +15,15 @@ resolution-markers = [
 ]
 
 [[package]]
+name = "backports-tarfile"
+version = "1.2.0"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/86/72/cd9b395f25e290e633655a100af28cb253e4393396264a98bd5f5951d50f/backports_tarfile-1.2.0.tar.gz", hash = "sha256:d75e02c268746e1b8144c278978b6e98e85de6ad16f8e4b0844a154557eca991" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/b9/fa/123043af240e49752f1c4bd24da5053b6bd00cad78c2be53c0d1e8b975bc/backports.tarfile-1.2.0-py3-none-any.whl", hash = "sha256:77e284d754527b01fb1e6fa8a1afe577858ebe4e9dad8919e34c862cb399bc34" },
+]
+
+[[package]]
 name = "cffi"
 version = "2.1.1"
 source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
@@ -197,9 +206,10 @@ wheels = [
 
 [[package]]
 name = "db-extractor"
-version = "1.2.4"
+version = "1.3.0"
 source = { editable = "." }
 dependencies = [
+    { name = "keyring" },
     { name = "openpyxl" },
     { name = "oracledb" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }, marker = "python_full_version < '3.11'" },
@@ -215,6 +225,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "keyring", specifier = ">=25.7.0" },
     { name = "openpyxl", specifier = ">=3.1.0" },
     { name = "oracledb", specifier = ">=2.0.0" },
     { name = "pandas", specifier = ">=2.2.0" },
@@ -301,6 +312,136 @@ wheels = [
     { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/e0/36/b35747582fa4f1a5453f8f3002405dbac788e450cec7674dc2d204b6ccb5/greenlet-3.5.6-cp315-cp315t-musllinux_1_2_x86_64.whl", hash = "sha256:de9923832f2d8c1a5ecd8d7260465a6ca5a86888a0d129e3bd5cf0406d2fc5bf" },
     { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/ed/69/6ec22ac9351e474d2a134d0ff9400dc80362d1c20f0721088ffffdfc205b/greenlet-3.5.6-cp315-cp315t-win_amd64.whl", hash = "sha256:2ab5f42ac6c238eb71770715e6e909ad9a1a92b6c681ccb64cd5a0f07edb953f" },
     { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/30/cf/697c051fd534e223461fb8b523890e21a24eeca229cd50624cff6f02fabd/greenlet-3.5.6-cp315-cp315t-win_arm64.whl", hash = "sha256:f9fe868463ec7e1363733af77e38a5fda3e9b63940337048c945d69e0c80ff24" },
+]
+
+[[package]]
+name = "importlib-metadata"
+version = "9.0.1"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+resolution-markers = [
+    "python_full_version < '3.11'",
+]
+dependencies = [
+    { name = "zipp" },
+]
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/6f/7e/1e7e8dc30634b93ebb3d58a3dea569ad146e656218d3960ab04f62047b29/importlib_metadata-9.0.1.tar.gz", hash = "sha256:ab830580bc0ef3db61ce8fae716389e5462b67e033018bab6d8f80ef17172f99" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/b3/55/ecca97ae19075f1fac62def77731e7f535e6c1fb8f92ff08160c5e6dade8/importlib_metadata-9.0.1-py3-none-any.whl", hash = "sha256:bba5600596a7e21f3eef53281cf28d6a5195634d2f2b78ff9501a3272c6eaab0" },
+]
+
+[[package]]
+name = "importlib-metadata"
+version = "10.1.0"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+resolution-markers = [
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'emscripten'",
+    "python_full_version == '3.11.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+]
+dependencies = [
+    { name = "zipp" },
+]
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/98/f6/4eda8458eb00ec03e715c376c6b23b3def69687924c68d36d1c4003d3bc4/importlib_metadata-10.1.0.tar.gz", hash = "sha256:82b04047fa09792c1a8cfeddfe08bec79e4b13c29c8469b0d3949860f61017e8" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/65/b6/495438ad95e0102aff8f6786b5474202f38cd5d4700d03a72b77977dec10/importlib_metadata-10.1.0-py3-none-any.whl", hash = "sha256:cf45ce66a929c64e994185a809c04840d0501db17e663810d993d0f4829265c7" },
+]
+
+[[package]]
+name = "jaraco-classes"
+version = "3.4.0"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+dependencies = [
+    { name = "more-itertools", version = "11.1.0", source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "more-itertools", version = "11.2.1", source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }, marker = "python_full_version >= '3.11'" },
+]
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/06/c0/ed4a27bc5571b99e3cff68f8a9fa5b56ff7df1c2251cc715a652ddd26402/jaraco.classes-3.4.0.tar.gz", hash = "sha256:47a024b51d0239c0dd8c8540c6c7f484be3b8fcf0b2d85c13825780d3b3f3acd" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/7f/66/b15ce62552d84bbfcec9a4873ab79d993a1dd4edb922cbfccae192bd5b5f/jaraco.classes-3.4.0-py3-none-any.whl", hash = "sha256:f662826b6bed8cace05e7ff873ce0f9283b5c924470fe664fff1c2f00f581790" },
+]
+
+[[package]]
+name = "jaraco-context"
+version = "6.1.2"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+dependencies = [
+    { name = "backports-tarfile", marker = "python_full_version < '3.12'" },
+]
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/af/50/4763cd07e722bb6285316d390a164bc7e479db9d90daa769f22578f698b4/jaraco_context-6.1.2.tar.gz", hash = "sha256:f1a6c9d391e661cc5b8d39861ff077a7dc24dc23833ccee564b234b81c82dfe3" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/f2/58/bc8954bda5fcda97bd7c19be11b85f91973d67a706ed4a3aec33e7de22db/jaraco_context-6.1.2-py3-none-any.whl", hash = "sha256:bf8150b79a2d5d91ae48629d8b427a8f7ba0e1097dd6202a9059f29a36379535" },
+]
+
+[[package]]
+name = "jaraco-functools"
+version = "4.6.0"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+dependencies = [
+    { name = "more-itertools", version = "11.1.0", source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "more-itertools", version = "11.2.1", source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }, marker = "python_full_version >= '3.11'" },
+]
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/6c/1f/c23395957d41ccf27c4e535c3d334c4051e5395b3752057ba4cbaec35c56/jaraco_functools-4.6.0.tar.gz", hash = "sha256:880c577ec9720b3a052d5bc611fb9f2269b3d87902ef42440df443b88e443280" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/02/36/ecc85bc96c273dc8a11273ed4782272975e6338d4a3e9228621175edf0e3/jaraco_functools-4.6.0-py3-none-any.whl", hash = "sha256:99e3dc0060c5cbe8fcd1cdb36258e2a65ca40f1566b2033b12abb1bb44dd3c30" },
+]
+
+[[package]]
+name = "jeepney"
+version = "0.9.0"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/7b/6f/357efd7602486741aa73ffc0617fb310a29b588ed0fd69c2399acbb85b0c/jeepney-0.9.0.tar.gz", hash = "sha256:cf0e9e845622b81e4a28df94c40345400256ec608d0e55bb8a3feaa9163f5732" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/b2/a3/e137168c9c44d18eff0376253da9f1e9234d0239e0ee230d2fee6cea8e55/jeepney-0.9.0-py3-none-any.whl", hash = "sha256:97e5714520c16fc0a45695e5365a2e11b81ea79bba796e26f9f1d178cb182683" },
+]
+
+[[package]]
+name = "keyring"
+version = "25.7.0"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+dependencies = [
+    { name = "importlib-metadata", version = "9.0.1", source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "importlib-metadata", version = "10.1.0", source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "jaraco-classes" },
+    { name = "jaraco-context" },
+    { name = "jaraco-functools" },
+    { name = "jeepney", marker = "sys_platform == 'linux'" },
+    { name = "pywin32-ctypes", marker = "sys_platform == 'win32'" },
+    { name = "secretstorage", marker = "sys_platform == 'linux'" },
+]
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/43/4b/674af6ef2f97d56f0ab5153bf0bfa28ccb6c3ed4d1babf4305449668807b/keyring-25.7.0.tar.gz", hash = "sha256:fe01bd85eb3f8fb3dd0405defdeac9a5b4f6f0439edbb3149577f244a2e8245b" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/81/db/e655086b7f3a705df045bf0933bdd9c2f79bb3c97bfef1384598bb79a217/keyring-25.7.0-py3-none-any.whl", hash = "sha256:be4a0b195f149690c166e850609a477c532ddbfbaed96a404d4e43f8d5e2689f" },
+]
+
+[[package]]
+name = "more-itertools"
+version = "11.1.0"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+resolution-markers = [
+    "python_full_version < '3.11'",
+]
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/de/1d/f4da6f02cdffe04d6362210b807146a26044c88d839208aec273bb0d9184/more_itertools-11.1.0.tar.gz", hash = "sha256:48e8f4d9e7e5878571ecf6f2b4e57634f93cd474cc8cfbd2376f2d11b396e30d" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/e8/3d/1087453384dbde46a8c7f9356eead2c58be8a7bf156bca40243377c85715/more_itertools-11.1.0-py3-none-any.whl", hash = "sha256:4b65538ae22f6fed0ce4874efd317463a7489796a0939fa66824dd542125a192" },
+]
+
+[[package]]
+name = "more-itertools"
+version = "11.2.1"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'emscripten'",
+    "python_full_version == '3.11.*' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+]
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/52/b8/c63995bebbb9ac9c059350e0fb8c82c2420c85aeca7d34e40aecf3df9281/more_itertools-11.2.1.tar.gz", hash = "sha256:cbf08fd0af284dc69718b9b76a8e6203df624d70209ea511e4219d350c856f63" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/5d/57/3c4b1c6f2e0cc29ba023802458ea3d2a996f87085559e4a5f2192d549532/more_itertools-11.2.1-py3-none-any.whl", hash = "sha256:35a7377edd1dd6608dcb2cdf534ded55ea32d49448875ad042cd3f879fb1ded0" },
 ]
 
 [[package]]
@@ -1050,6 +1191,28 @@ wheels = [
 ]
 
 [[package]]
+name = "pywin32-ctypes"
+version = "0.2.3"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/85/9f/01a1a99704853cb63f253eea009390c88e7131c67e66a0a02099a8c917cb/pywin32-ctypes-0.2.3.tar.gz", hash = "sha256:d162dc04946d704503b2edc4d55f3dba5c1d539ead017afa00142c38b9885755" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/de/3d/8161f7711c017e01ac9f008dfddd9410dff3674334c233bde66e7ba65bbf/pywin32_ctypes-0.2.3-py3-none-any.whl", hash = "sha256:8a1513379d709975552d202d942d9837758905c8d01eb82b8bcc30918929e7b8" },
+]
+
+[[package]]
+name = "secretstorage"
+version = "3.5.0"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "jeepney" },
+]
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/1c/03/e834bcd866f2f8a49a85eaff47340affa3bfa391ee9912a952a1faa68c7b/secretstorage-3.5.0.tar.gz", hash = "sha256:f04b8e4689cbce351744d5537bf6b1329c6fc68f91fa666f60a380edddcd11be" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/b7/46/f5af3402b579fd5e11573ce652019a67074317e18c1935cc0b4ba9b35552/secretstorage-3.5.0-py3-none-any.whl", hash = "sha256:0ce65888c0725fcb2c5bc0fdb8e5438eece02c523557ea40ce0703c266248137" },
+]
+
+[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
@@ -1225,4 +1388,13 @@ source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pyp
 sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/7a/29/6a1391d31cd00ff9e927215a224a880e1e84e826b64ba80a499e51c074d8/tzdata-2026.6.tar.gz", hash = "sha256:85d2cd9c09f81f0bb29db27759fc83af4f1e620efb814f8c5bf8b4cc4feece6d" }
 wheels = [
     { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/0a/66/9a06c2227fedfd4919f0eaaa8b94377d9730882a7e4f95823c9a331ab5e1/tzdata-2026.6-py2.py3-none-any.whl", hash = "sha256:0a10eec6e13ef16b627fabed9a5f2ba61a62b1c67f327305f4e7e412a70b4aec" },
+]
+
+[[package]]
+name = "zipp"
+version = "4.1.2"
+source = { registry = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/simple" }
+sdist = { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/18/05/ba1458dee0ac485b2a01071c1b88f5199fe878a485df482e10e1ef2205cc/zipp-4.1.2.tar.gz", hash = "sha256:cf474b90b07ea932637e17c6b9479de2b2882900b0d311bdaf4f5c000a15a97f" }
+wheels = [
+    { url = "https://saascopel.jfrog.io/artifactory/api/pypi/copel-pypi/packages/packages/b8/44/7bd2007260da11cccca29ba2d4c345f1287aa663db38ee7cefeabf6386a5/zipp-4.1.2-py3-none-any.whl", hash = "sha256:b30cb6cd253122169c47de245ca24a86bac2a5d3802ba15bf7ba6414eb9e144d" },
 ]
