@@ -159,6 +159,34 @@ def consultar_dataframe(
     monitorar=True,         Habilitar Progresso True, False
     arquivo_config=None     Caminho de arquivo json do config
 )
+
+# Funções com passagem direta dos parâmetros da conexão, sem config.json
+def exportar_consulta_direto(
+    host,                   *Host/IP do servidor de banco
+    porta,                  *Porta da conexão: 1521 (Oracle) ou 9996 (Denodo)
+    usuario,                *Nome de usuário
+    database_ou_service,    *Service Name (Oracle) ou Database (Denodo)
+    consulta,               *Nome ou caminho do arquivo sql, vql
+    saida,                  *Nome ou caminho do arquivo de saida
+    separador=";",          Separador, para arquivos csv
+    chunksize=None,         Extração por chunks
+    parametros=None,        Parâmetros da consulta SQL
+    nome_planilha="Dados",  Nome da planilha base, para arquivos xlsx
+    monitorar=True,         Habilitar progresso True, False
+    banco_alias=None        Alias customizado associado a credencial no cofre
+)
+def consultar_dataframe_direto(
+    host,                   *Host/IP do servidor de banco
+    porta,                  *Porta da conexão: 1521 (Oracle) ou 9996 (Denodo)
+    usuario,                *Nome de usuário
+    database_ou_service,    *Service Name (Oracle) ou Database (Denodo)
+    consulta,               *Nome ou caminho do arquivo sql, vql
+    parametros=None,        Parâmetros da consulta SQL
+    chunksize=None,         Extração por chunks
+    dataframe="pandas",     Biblioteca de retorno: 'pandas' ou 'polars'
+    monitorar=True,         Habilitar progresso True, False
+    banco_alias=None        Alias customizado associado a credencial no cofre
+)
 ```
 
 ### Funções de credeciais

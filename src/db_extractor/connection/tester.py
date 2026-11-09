@@ -119,18 +119,50 @@ def _testar_denodo(cfg: dict, timeout: int = 5) -> TesteConexaoResult:
             conn.close()
 
 
+def inferir_tipo_banco(cfg: dict, tipo_fallback: str = "") -> str:
+    """Infere se o banco é ORACLE ou DENODO pela porta (1521/9996) ou campos de cfg."""
+    porta = cfg.get("port")
+    if porta is not None:
+        try:
+            porta_int = int(porta)
+            if porta_int == 1521:
+                return "ORACLE"
+            elif porta_int == 9996:
+                return "DENODO"
+        except (ValueError, TypeError):
+            pass
+
+    if "service" in cfg or "sid" in cfg:
+        return "ORACLE"
+
+    if "database" in cfg and "service" not in cfg:
+        return "DENODO"
+
+    texto = (tipo_fallback or "").strip().upper()
+    if "ORACLE" in texto:
+        return "ORACLE"
+    elif "DENODO" in texto:
+        return "DENODO"
+
+    return ""
+
+
 def testar_conexao(tipo_banco: str, cfg: dict, timeout: int = 5) -> Tuple[bool, bool, str]:
     """
     Retorna uma NamedTuple compatível com Tuple[bool, bool, str]:
       (sucesso, erro_de_credencial, mensagem_erro)
     """
-    tipo = (tipo_banco or "").strip().upper()
+    tipo = inferir_tipo_banco(cfg, tipo_fallback=tipo_banco)
 
-    if "ORACLE" in tipo:
+    if tipo == "ORACLE":
         return _testar_oracle(cfg, timeout=timeout)
-    elif "DENODO" in tipo:
+    elif tipo == "DENODO":
         return _testar_denodo(cfg, timeout=timeout)
     else:
+        porta = cfg.get("port")
         return TesteConexaoResult(
-            False, False, f"Tipo de banco '{tipo_banco}' não suportado para validação de conexão."
+            False,
+            False,
+            f"Não foi possível identificar o tipo de banco para o alias '{tipo_banco}' (porta: {porta}). "
+            f"Portas suportadas: 1521 (Oracle) ou 9996 (Denodo).",
         )

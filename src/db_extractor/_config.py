@@ -185,3 +185,47 @@ def obter_config_banco(nome_banco, arquivo_config=None):
 
     origem = f"arquivo '{arquivo_config}'" if arquivo_config else "config.json ausente ou banco não declarado"
     raise BancoNaoEncontrado(f"Banco '{nome_banco}' não localizado nas configurações ({origem}).")
+
+
+def inferir_tipo_banco_por_porta(porta: int | str) -> str:
+    porta_int = int(porta)
+    if porta_int == 1521:
+        return "ORACLE"
+    elif porta_int == 9996:
+        return "DENODO"
+    else:
+        raise ValueError(
+            f"Não foi possível inferir a engine pela porta '{porta}'. "
+            "Portas conhecidas: 1521 (Oracle) ou 9996 (Denodo)."
+        )
+
+
+def montar_e_validar_config_direta(
+    host: str,
+    porta: int | str,
+    usuario: str,
+    database_ou_service: str,
+    banco_alias: str | None = None,
+) -> tuple[str, dict]:
+    """
+    Monta a configuração em memória e passa pelo circuito de validação/Keyring.
+    Retorna (alias, cfg_validada).
+    """
+    tipo = inferir_tipo_banco_por_porta(porta)
+    
+    host_limpo = host.split(".")[0].replace("-", "_").upper()
+    alias = (banco_alias or f"{tipo}_{host_limpo}_{database_ou_service.upper()}").strip().upper()
+
+    cfg = {
+        "user": usuario,
+        "host": host,
+        "port": int(porta)
+    }
+
+    if tipo == "ORACLE":
+        cfg["service"] = database_ou_service
+    else:  # DENODO
+        cfg["database"] = database_ou_service
+
+    cfg_validada = _validar_e_proteger_credencial(alias, cfg)
+    return alias, cfg_validada

@@ -3,26 +3,119 @@ import ctypes
 from ctypes import wintypes
 import keyring
 from ._config import carregar_config
-from ._exceptions import BancoNaoEncontrado, SenhaNaoEncontrada, ConfigNaoEncontrado
+from ._exceptions import SenhaNaoEncontrada
 from .utils import ler_senha_com_mascara
 
 
-def _obter_usuario_do_config(banco: str) -> str:
-    config = carregar_config()
-    banco_upper = banco.strip().upper()
-    for nome, cfg in config.items():
-        if nome.upper() == banco_upper:
-            return cfg.get("user")
-    raise BancoNaoEncontrado(f"Banco '{banco}' não localizado no config.json.")
+def _listar_credenciais_windows_por_filtro(filtro: str = "db_extractor*") -> list:
+    """Busca diretamente no Windows Credential Manager todas as credenciais com o prefixo."""
+    if sys.platform != "win32":
+        return []
+
+    class CREDENTIAL(ctypes.Structure):
+        _fields_ = [
+            ("Flags", wintypes.DWORD),
+            ("Type", wintypes.DWORD),
+            ("TargetName", wintypes.LPWSTR),
+            ("Comment", wintypes.LPWSTR),
+            ("LastWritten", wintypes.FILETIME),
+            ("CredentialBlobSize", wintypes.DWORD),
+            ("CredentialBlob", ctypes.c_void_p),
+            ("Persist", wintypes.DWORD),
+            ("AttributeCount", wintypes.DWORD),
+            ("Attributes", ctypes.c_void_p),
+            ("TargetAlias", wintypes.LPWSTR),
+            ("UserName", wintypes.LPWSTR),
+        ]
+
+    PCREDENTIAL = ctypes.POINTER(CREDENTIAL)
+    advapi32 = ctypes.WinDLL("advapi32.dll")
+
+    cred_enumerate = advapi32.CredEnumerateW
+    cred_enumerate.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        ctypes.POINTER(wintypes.DWORD),
+        ctypes.POINTER(ctypes.POINTER(PCREDENTIAL)),
+    ]
+    cred_enumerate.restype = wintypes.BOOL
+
+    cred_free = advapi32.CredFree
+    cred_free.argtypes = [ctypes.c_void_p]
+
+    count = wintypes.DWORD(0)
+    creds_ptr = ctypes.POINTER(PCREDENTIAL)()
+
+    registros = []
+    if cred_enumerate(filtro, 0, ctypes.byref(count), ctypes.byref(creds_ptr)):
+        try:
+            for i in range(count.value):
+                c = creds_ptr[i].contents
+                target = c.TargetName or ""
+                user = c.UserName or ""
+                banco = target.replace("db_extractor_", "") if target.startswith("db_extractor_") else target
+                registros.append({
+                    "banco": banco,
+                    "usuario": user,
+                    "servico": target,
+                })
+        finally:
+            cred_free(creds_ptr)
+
+    return registros
 
 
-def cadastrar_credencial(banco: str, usuario: str = None, senha: str = None) -> None:
+def _descobrir_usuario(banco: str, usuario_informado: str | None = None) -> list[str]:
+    """
+    Retorna a lista de usuários associados ao banco sem exigir config.json.
+    Verifica:
+    1. Parâmetro informado.
+    2. config.json (se existir e contiver o banco).
+    3. Cofre do Windows (entradas existentes para db_extractor_<BANCO>).
+    """
+    if usuario_informado:
+        return [usuario_informado.strip()]
+
     banco_upper = banco.strip().upper()
+    servico_alvo = f"db_extractor_{banco_upper}"
+
+    # 1. Tenta obter do config.json sem quebrar se não existir
+    try:
+        config = carregar_config()
+        for nome, cfg in config.items():
+            if nome.strip().upper() == banco_upper:
+                user_cfg = cfg.get("user")
+                if user_cfg:
+                    return [user_cfg.strip()]
+    except Exception:
+        pass
+
+    # 2. Tenta descobrir diretamente pelo cofre do sistema
+    salvos = _listar_credenciais_windows_por_filtro(f"{servico_alvo}*")
+    usuarios_cofre = [
+        reg["usuario"]
+        for reg in salvos
+        if reg["servico"].upper() == servico_alvo.upper() and reg["usuario"]
+    ]
+    if usuarios_cofre:
+        return list(set(usuarios_cofre))
+
+    return []
+
+
+def cadastrar_credencial(banco: str, usuario: str | None = None, senha: str | None = None) -> None:
+    banco_upper = banco.strip().upper()
+
+    usuarios = _descobrir_usuario(banco_upper, usuario)
+    if usuarios:
+        usuario = usuarios[0]
+    elif sys.stdin and sys.stdin.isatty():
+        usuario = input(f"Digite o nome de usuário para '{banco_upper}': ").strip()
+    else:
+        raise SenhaNaoEncontrada(f"Não foi possível determinar o usuário para '{banco_upper}'.")
 
     if not usuario:
-        usuario = _obter_usuario_do_config(banco_upper)
-        if not usuario:
-            usuario = input(f"Digite o nome de usuário para '{banco_upper}': ").strip()
+        raise SenhaNaoEncontrada("O nome de usuário não pode ser vazio.")
 
     servico = f"db_extractor_{banco_upper}"
     senha_existente = keyring.get_password(servico, usuario)
@@ -45,13 +138,26 @@ def cadastrar_credencial(banco: str, usuario: str = None, senha: str = None) -> 
     print(f"[db_extractor] Credencial cadastrada com sucesso para '{usuario}' em '{banco_upper}'.")
 
 
-def alterar_senha(banco: str, usuario: str = None, nova_senha: str = None) -> None:
+def alterar_senha(banco: str, usuario: str | None = None, nova_senha: str | None = None) -> None:
     banco_upper = banco.strip().upper()
 
-    if not usuario:
-        usuario = _obter_usuario_do_config(banco_upper)
-        if not usuario:
+    usuarios = _descobrir_usuario(banco_upper, usuario)
+    if len(usuarios) == 1:
+        usuario = usuarios[0]
+    elif len(usuarios) > 1 and not usuario:
+        print(f"[db_extractor] Múltiplos usuários encontrados no cofre para '{banco_upper}': {', '.join(usuarios)}")
+        if sys.stdin and sys.stdin.isatty():
+            usuario = input(f"Digite qual usuário deseja alterar: ").strip()
+        else:
+            raise SenhaNaoEncontrada(f"Especifique o parâmetro 'usuario'. Usuários encontrados: {usuarios}")
+    elif not usuarios:
+        if sys.stdin and sys.stdin.isatty():
             usuario = input(f"Digite o nome de usuário para '{banco_upper}': ").strip()
+        else:
+            raise SenhaNaoEncontrada(f"Não foi possível determinar o usuário para '{banco_upper}'.")
+
+    if not usuario:
+        raise SenhaNaoEncontrada("O nome de usuário não pode ser vazio.")
 
     servico = f"db_extractor_{banco_upper}"
     senha_atual = keyring.get_password(servico, usuario)
@@ -75,73 +181,34 @@ def alterar_senha(banco: str, usuario: str = None, nova_senha: str = None) -> No
     print(f"[db_extractor] Senha de '{usuario}' em '{banco_upper}' alterada com sucesso!")
 
 
-def remover_credencial(banco: str, usuario: str = None) -> None:
+def remover_credencial(banco: str, usuario: str | None = None) -> None:
     banco_upper = banco.strip().upper()
-
-    if not usuario:
-        usuario = _obter_usuario_do_config(banco_upper)
-
     servico = f"db_extractor_{banco_upper}"
-    try:
-        keyring.delete_password(servico, usuario)
-        print(f"[db_extractor] Credencial de '{usuario}' em '{banco_upper}' removida do cofre.")
-    except Exception:
-        print("[db_extractor] Nenhuma credencial encontrada para remover.")
 
+    # Descobre os usuários sem disparar erro se o config não existir
+    usuarios = _descobrir_usuario(banco_upper, usuario)
 
-def _listar_credenciais_windows_por_filtro(filtro: str = "db_extractor*") -> list:
-    """Busca diretamente no Windows Credential Manager todas as credenciais com o prefixo."""
-    if sys.platform != "win32":
-        return []
-
-    # Estruturas da Windows API (advapi32.dll)
-    class CREDENTIAL(ctypes.Structure):
-        _fields_ = [
-            ("Flags", wintypes.DWORD),
-            ("Type", wintypes.DWORD),
-            ("TargetName", wintypes.LPWSTR),
-            ("Comment", wintypes.LPWSTR),
-            ("LastWritten", wintypes.FILETIME),
-            ("CredentialBlobSize", wintypes.DWORD),
-            ("CredentialBlob", ctypes.c_void_p),
-            ("Persist", wintypes.DWORD),
-            ("AttributeCount", wintypes.DWORD),
-            ("Attributes", ctypes.c_void_p),
-            ("TargetAlias", wintypes.LPWSTR),
-            ("UserName", wintypes.LPWSTR),
-        ]
-
-    PCREDENTIAL = ctypes.POINTER(CREDENTIAL)
-    advapi32 = ctypes.WinDLL("advapi32.dll")
-    
-    cred_enumerate = advapi32.CredEnumerateW
-    cred_enumerate.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD), ctypes.POINTER(ctypes.POINTER(PCREDENTIAL))]
-    cred_enumerate.restype = wintypes.BOOL
-
-    cred_free = advapi32.CredFree
-    cred_free.argtypes = [ctypes.c_void_p]
-
-    count = wintypes.DWORD(0)
-    creds_ptr = ctypes.POINTER(PCREDENTIAL)()
-    
-    registros = []
-    if cred_enumerate(filtro, 0, ctypes.byref(count), ctypes.byref(creds_ptr)):
+    if not usuarios:
+        # Tenta remover diretamente caso o backend suporte apenas o serviço
         try:
-            for i in range(count.value):
-                c = creds_ptr[i].contents
-                target = c.TargetName or ""
-                user = c.UserName or ""
-                # Extrai o nome do banco a partir do target "db_extractor_NOME"
-                banco = target.replace("db_extractor_", "") if target.startswith("db_extractor_") else target
-                registros.append({
-                    "banco": banco,
-                    "usuario": user,
-                    "servico": target
-                })
-        finally:
-            cred_free(creds_ptr)
-            
-    return registros
+            keyring.delete_password(servico, usuario or "")
+            print(f"[db_extractor] Credencial de '{banco_upper}' removida do cofre.")
+            return
+        except Exception:
+            print(f"[db_extractor] Nenhuma credencial encontrada no cofre para '{banco_upper}'.")
+            return
+
+    removidos = 0
+    for u in usuarios:
+        try:
+            keyring.delete_password(servico, u)
+            print(f"[db_extractor] Credencial de '{u}' em '{banco_upper}' removida do cofre.")
+            removidos += 1
+        except Exception:
+            pass
+
+    if removidos == 0:
+        print(f"[db_extractor] Nenhuma credencial encontrada para remover em '{banco_upper}'.")
 
 
 def listar_credenciais() -> None:
@@ -153,12 +220,11 @@ def listar_credenciais() -> None:
     config = None
     try:
         config = carregar_config()
-    except (ConfigNaoEncontrado, FileNotFoundError):
+    except Exception:
         config = None
 
     print("\n" + "=" * 65)
 
-    # CENÁRIO 1: config.json foi encontrado
     if config:
         print(f"{'BANCO':<15} {'USUÁRIO':<15} {'NO COFRE?':<12} {'SERVIÇO KEYRING'}")
         print("=" * 65)
@@ -166,7 +232,7 @@ def listar_credenciais() -> None:
         for banco, cfg in config.items():
             usuario = cfg.get("user", "(não definido)")
             service_name = f"db_extractor_{banco.upper()}"
-            
+
             tem_senha = False
             if usuario and usuario != "(não definido)":
                 senha = keyring.get_password(service_name, usuario)
@@ -177,7 +243,6 @@ def listar_credenciais() -> None:
             status = "Sim [OK]" if tem_senha else "Não [Pendente]"
             print(f"{banco:<15} {usuario:<15} {status:<12} {service_name}")
 
-    # CENÁRIO 2: Sem config.json -> lê direto do cofre do sistema
     else:
         print("[Aviso] config.json não encontrado. Listando entradas salvas no cofre:")
         print("=" * 65)
