@@ -88,7 +88,7 @@ def _pedir_senha_terminal(nome_banco: str, usuario: str, motivo: str = "") -> st
 def _validar_e_proteger_credencial(nome_banco: str, cfg: dict) -> dict:
     banco_chave = nome_banco.upper()
 
-    # 1. DISJUNTOR DE SEGURANÇA (Circuit Breaker)
+    # DISJUNTOR DE SEGURANÇA (Circuit Breaker)
     # Se este banco já falhou a senha nesta execução, rejeita na hora sem bater no banco!
     if banco_chave in _BANCOS_BLOQUEADOS_SESSAO:
         raise CredencialInvalidaError(
@@ -97,7 +97,7 @@ def _validar_e_proteger_credencial(nome_banco: str, cfg: dict) -> dict:
             f"preventivamente para não bloquear o seu usuário no banco de dados."
         )
 
-    # 2. CACHE DE SUCESSO
+    # CACHE DE SUCESSO
     # Se já validou neste mesmo script, retorna a configuração direto sem refazer SELECT 1
     if banco_chave in _CONFIG_VALIDADAS_CACHE:
         return _CONFIG_VALIDADAS_CACHE[banco_chave]
@@ -123,24 +123,21 @@ def _validar_e_proteger_credencial(nome_banco: str, cfg: dict) -> dict:
 
     cfg_final["password"] = senha
 
-    # 3. TESTE DE CONEXÃO
+    # TESTE DE CONEXÃO
     sucesso, erro_credencial, detalhe_erro = testar_conexao(nome_banco, cfg_final)
 
     if sucesso:
-        # Registra no cache de sucesso da sessão
         _CONFIG_VALIDADAS_CACHE[banco_chave] = cfg_final
         return cfg_final
 
-    # 4. TRATAMENTO DE ERRO DE CREDENCIAL
+    # TRATAMENTO DE ERRO DE CREDENCIAL
     if erro_credencial:
-        # Remove a senha errada do cofre imediatamente
         try:
             keyring.delete_password(service_name, usuario)
         except Exception:
             pass
 
         if origem_config:
-            # Marca o banco como bloqueado nesta sessão
             _BANCOS_BLOQUEADOS_SESSAO.add(banco_chave)
             raise CredencialInvalidaError(
                 f"A senha fornecida no config.json para '{usuario}' ({nome_banco}) é INVÁLIDA.\n"
@@ -179,10 +176,6 @@ def _validar_e_proteger_credencial(nome_banco: str, cfg: dict) -> dict:
 
 
 def obter_config_banco(nome_banco, arquivo_config=None):
-    """
-    Recupera a configuração do banco.
-    Aceita arquivo_config opcional.
-    """
     config = carregar_config(caminho_arquivo=arquivo_config)
     banco_procurado = nome_banco.strip().upper()
 
