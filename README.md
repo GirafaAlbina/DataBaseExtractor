@@ -147,6 +147,7 @@ def exportar_consulta(
     chunksize=None,         Extração por chunks
     parametros=None,        Parâmetros da consulta SQL
     nome_planilha="Dados",  Nome da planliha base, para arquivos xlsx
+    compression="snappy",   Compressão parquet
     monitorar=True,         Habilitar Progresso True, False
     arquivo_config=None     Caminho de arquivo json do config
 )
@@ -155,7 +156,7 @@ def consultar_dataframe(
     consulta,               *Nome ou caminho do arquivo sql, vql
     chunksize=None,         Extração por chunks
     parametros=None,        Parâmetros da consulta SQL
-    dataframe="pandas",     Bibliteca que retorna o df polars, pandas
+    dataframe="pandas",     Biblioteca que retorna o df polars, pandas
     monitorar=True,         Habilitar Progresso True, False
     arquivo_config=None     Caminho de arquivo json do config
 )
@@ -172,6 +173,7 @@ def exportar_consulta_direto(
     chunksize=None,         Extração por chunks
     parametros=None,        Parâmetros da consulta SQL
     nome_planilha="Dados",  Nome da planilha base, para arquivos xlsx
+    compression="snappy",   Compressão parquet
     monitorar=True,         Habilitar progresso True, False
     banco_alias=None        Alias customizado associado a credencial no cofre
 )

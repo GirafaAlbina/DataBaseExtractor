@@ -54,6 +54,7 @@ def exportar_consulta(
     chunksize=None,
     parametros=None,
     nome_planilha=DEFAULT_SHEET_NAME,
+    compression: str = "snappy",
     monitorar=True,
     arquivo_config=None
 ):
@@ -125,7 +126,7 @@ def exportar_consulta(
             abas = resultado["abas"]
 
         elif extensao == ".parquet":
-            linhas = exportar_parquet(chunks, saida)
+            linhas = exportar_parquet(chunks, saida, compression=compression)
             abas = 1
 
         else:
@@ -165,6 +166,7 @@ def exportar_consulta_direto(
     chunksize: int | None = None,
     parametros: dict | None = None,
     nome_planilha: str = DEFAULT_SHEET_NAME,
+    compression: str = "snappy",
     monitorar: bool = True,
     banco_alias: str | None = None,
 ) -> ExportResult:
@@ -242,7 +244,7 @@ def exportar_consulta_direto(
             linhas = resultado["linhas"]
             abas = resultado["abas"]
         elif extensao == ".parquet":
-            linhas = exportar_parquet(chunks, saida)
+            linhas = exportar_parquet(chunks, saida, compression=compression)
             abas = 1
         else:
             raise ValueError(f"Formato não suportado: {extensao}")
