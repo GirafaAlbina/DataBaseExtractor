@@ -12,6 +12,7 @@ from .credentials import (
     remover_credencial,
     listar_credenciais
 )
+from .parallel import exportar_lotes_paralelo
                    
 
 __all__ = [
@@ -23,6 +24,7 @@ __all__ = [
     "alterar_senha",                # credentials
     "remover_credencial",           # credentials
     "listar_credenciais",           # credentials
+    "exportar_lotes_paralelo",      # parallel
     "__version__",                  # version 
     "__author__",                   # version
     "__title__",                    # version

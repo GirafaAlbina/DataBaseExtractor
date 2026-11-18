@@ -1,40 +1,28 @@
-import pandas as pd
-import pyarrow as pa
+import polars as pl
 import pyarrow.parquet as pq
 
 
-def aplicar_downcasting(df: pd.DataFrame) -> pd.DataFrame:
-    """Reduz o consumo de RAM e disco convertendo tipos 64-bit para menores quando seguro."""
-    for col in df.columns:
-        serie = df[col]
-        dtype = serie.dtype
+def aplicar_downcasting_polars(df: pl.DataFrame) -> pl.DataFrame:
+    """Compacta automaticamente tipos numéricos e strings repetitivas em Rust."""
+    expressoes = []
+    n_linhas = len(df)
 
-        if pd.api.types.is_integer_dtype(dtype):
-            df[col] = pd.to_numeric(serie, downcast="integer")
-        elif pd.api.types.is_float_dtype(dtype):
-            # Verifica se uma coluna float na verdade representa inteiros com NaN
-            sem_nulos = serie.dropna()
-            if not sem_nulos.empty and (sem_nulos % 1 == 0).all():
-                # Usa Int32/Int64 nullable do Pandas para preservar inteiros com NaN
-                min_val, max_val = sem_nulos.min(), sem_nulos.max()
-                if -2_147_483_648 <= min_val and max_val <= 2_147_483_647:
-                    df[col] = serie.astype("Int32")
-                else:
-                    df[col] = serie.astype("Int64")
-            else:
-                df[col] = pd.to_numeric(serie, downcast="float")
-        elif pd.api.types.is_object_dtype(dtype):
-            # Converte colunas de baixa cardinalidade (ex: SITUACAO, FASE, REGIONAL) em dicionário
-            if len(df) > 0 and (serie.nunique(dropna=True) / len(df)) < 0.05:
-                df[col] = serie.astype("category")
+    for col, dtype in df.schema.items():
+        # Compacta inteiros e floats para o menor tipo seguro (ex: Int64 -> Int32/Int16)
+        if dtype.is_numeric():
+            expressoes.append(pl.col(col).shrink_dtype())
+        # Converte strings de baixa cardinalidade (< 5% únicos) para Categorical
+        elif dtype == pl.String and n_linhas > 0:
+            if df[col].n_unique() / n_linhas < 0.05:
+                expressoes.append(pl.col(col).cast(pl.Categorical))
 
-    return df
+    return df.with_columns(expressoes) if expressoes else df
 
 
-def exportar_parquet(
+def exportar_parquet_polars(
     chunks,
     arquivo_saida: str,
-    compression: str = "snappy",
+    compression: str = "zstd",
     downcast: bool = True,
 ) -> int:
     writer = None
@@ -43,14 +31,19 @@ def exportar_parquet(
 
     try:
         for chunk in chunks:
-            if chunk.empty:
+            # 'chunk' pode ser a lista de tuplas direto de cursor.fetchmany()
+            if not chunk:
                 continue
 
+            df = pl.DataFrame(chunk, orient="row")
+
             if downcast:
-                chunk = aplicar_downcasting(chunk)
+                df = aplicar_downcasting_polars(df)
+
+            # Conversão zero-copy para Apache Arrow
+            table = df.to_arrow()
 
             if schema_fixo is None:
-                table = pa.Table.from_pandas(chunk, preserve_index=False)
                 schema_fixo = table.schema
                 writer = pq.ParquetWriter(
                     arquivo_saida,
@@ -58,16 +51,11 @@ def exportar_parquet(
                     compression=compression,
                 )
             else:
-                # Força o mesmo schema do primeiro chunk para evitar erro de tipo entre lotes
-                table = pa.Table.from_pandas(
-                    chunk,
-                    schema=schema_fixo,
-                    preserve_index=False,
-                    safe=False,
-                )
+                # Garante compatibilidade de schema entre lotes (ex: colunas nulas em um chunk)
+                table = table.cast(schema_fixo, safe=False)
 
             writer.write_table(table)
-            total_linhas += len(chunk)
+            total_linhas += len(df)
 
         return total_linhas
 

@@ -71,6 +71,7 @@ db_extractor/
 │       │
 │       ├── extractor.py
 │       ├── credentials.py
+│       ├── parallel.py
 │       ├── _config.py
 │       ├── _constants.py
 │       ├── _exceptions.py
@@ -219,6 +220,25 @@ def remover_credencial(
 def listar_credenciais()
 ```
 
+### Função de exportação em paralelo
+
+```python
+def exportar_lotes_paralelo(
+    banco,                      *Nome do banco no config
+    consulta_sql,               *String SQL ou caminho do arquivo .sql
+    lotes,                      *Lista com os parâmetros de cada lote
+    diretorio_saida,            *Pasta de destino dos arquivos .parquet
+    prefixo_arquivo="lote",     Prefixo padrão dos arquivos gerados
+    max_workers=4,              Número de threads e conexões simultâneas
+    chunksize=100000,           Tamanho do lote em memória para escrita
+    arraysize=50000,            Buffer de rede do cursor
+    compression="zstd",         Compressão Parquet
+    downcast=True,              Compactação automática de tipos numéricos e categóricos
+    nome_lote_fn=None,          Função customizada para nomear cada arquivo: fn(indice, params)
+    arquivo_config=None         Caminho alternativo de arquivo json de configuração
+)
+```
+
 ### Versionamento
 
 ```python
@@ -296,7 +316,8 @@ from db_extractor import exportar_consulta
 resultado = exportar_consulta(
     banco="ORACLE_1",
     consulta="Municipios.sql",
-    saida="Municipios.parquet"
+    saida="Municipios.parquet",
+    compression="zstd"
 )
 print(resultado)
 ```
@@ -329,7 +350,8 @@ resultado = exportar_consulta(
     banco="ORACLE_1",
     consulta="Municipios.sql",
     saida="Municipios.parquet",
-    chunksize=50000
+    chunksize=50000,
+    compression="zstd"
 )
 for chunk in consultar_dataframe(
     banco="ORACLE_1",
@@ -342,6 +364,8 @@ for chunk in consultar_dataframe(
 ---
 
 ### Uso com Parâmetros
+
+#### Exemplo 1
 
 Consulta SQL:
 
@@ -365,6 +389,10 @@ resultado = exportar_consulta(
     }
 )
 ```
+
+#### Exemplo 2
+
+Consulta SQL:
 
 ```sql
 SELECT
@@ -390,7 +418,70 @@ df = consultar_dataframe(
 )
 ```
 
+#### Exemplo 3
+
+```sql
+SELECT *
+FROM {NOME_TABELA}
+WHERE ANO = :ANO
+```
+
+Execução:
+
+```python
+df = consultar_dataframe(
+    banco="ORACLE_1",
+    consulta="Consulta_Dinamica.sql",
+    parametros={
+        "NOME_TABELA": "SCHEMA_DW.TAB_CLIENTES_2026",
+        "ANO": 2026
+    }
+)
+```
+
 ---
+
+## Uso Avançado
+
+### Extração Paralela em Lotes
+
+Ideal para particionar consultas de milhões de linhas.
+
+```python
+lotes = [
+    {"TABELA": "CAD_UC_EE", "COD_MUN": 4106902},
+    {"TABELA": "CAD_UC_EE", "COD_MUN": 4113700},
+    {"TABELA": "CAD_UC_EE", "COD_MUN": 4108304},
+    {"TABELA": "CAD_UC_EE", "COD_MUN": 4115200},
+]
+
+arquivos = exportar_lotes_paralelo(
+    banco="CIS",
+    consulta_sql="SELECT * FROM {TABELA} WHERE COD_MUN = :COD_MUN",
+    lotes=lotes,
+    diretorio_saida="saida_parana",
+    max_workers=4,
+    chunksize=100000,
+    arraysize=50000,
+    compression="zstd",
+    downcast=True,
+    nome_lote_fn=lambda idx, p: f"mun_{p['COD_MUN']}"
+)
+print(f"Arquivos gerados: {arquivos}")
+```
+
+### Reaproveitamento manual de sessão
+
+Para loops sequenciais que executam a mesma query dezenas de vezes sem reabrir conexão TCP nem refazer o parse do SQL
+
+```python
+with abrir_sessao(banco="CIS", max_workers=2) as sessao:
+    for cod in [4106902, 4113700, 4108304]:
+        df = sessao.consultar_dataframe(
+            consulta="SELECT * FROM CAD_UC_EE WHERE COD_MUN = :COD_MUN",
+            parametros={"COD_MUN": cod}
+        )
+```
 
 ## Excel e Limite de Linhas
 
