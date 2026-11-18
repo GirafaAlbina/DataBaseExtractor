@@ -73,6 +73,7 @@ db_extractor/
 │       ├── credentials.py
 │       ├── parallel.py
 │       ├── _config.py
+│       ├── _session.py
 │       ├── _constants.py
 │       ├── _exceptions.py
 │       ├── _version.py
@@ -236,6 +237,18 @@ def exportar_lotes_paralelo(
     downcast=True,              Compactação automática de tipos numéricos e categóricos
     nome_lote_fn=None,          Função customizada para nomear cada arquivo: fn(indice, params)
     arquivo_config=None         Caminho alternativo de arquivo json de configuração
+)
+```
+
+### Função de gestão de sessão
+
+```python
+def abrir_sessao(
+    banco,                  *Nome do banco no config
+    min_workers=1,          Número mínimo de conexões abertas no pool
+    max_workers=4,          Número máximo de conexões simultâneas no pool
+    arraysize=50000,        Buffer de rede do cursor
+    arquivo_config=None     Caminho alternativo de arquivo json de configuração
 )
 ```
 

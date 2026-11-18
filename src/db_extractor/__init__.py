@@ -13,7 +13,8 @@ from .credentials import (
     listar_credenciais
 )
 from .parallel import exportar_lotes_paralelo
-                   
+from ._session import abrir_sessao, SessaoExtracao
+
 
 __all__ = [
     "exportar_consulta",            # extractor
@@ -25,6 +26,8 @@ __all__ = [
     "remover_credencial",           # credentials
     "listar_credenciais",           # credentials
     "exportar_lotes_paralelo",      # parallel
+    "abrir_sessao",                 # session
+    "SessaoExtracao",               # session
     "__version__",                  # version 
     "__author__",                   # version
     "__title__",                    # version

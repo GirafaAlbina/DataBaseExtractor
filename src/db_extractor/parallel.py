@@ -36,7 +36,7 @@ def exportar_lotes_paralelo(
         )
         caminho_parquet = os.path.join(diretorio_saida, f"{nome_base}.parquet")
 
-        sql_final, binds = preparar_sql_e_binds(consulta_sql, params_lote)
+        sql_final, binds = preparar_sql_e_binds(sql_base, params_lote)
         conn_prep = sessao.adquirir_conexao()
         cursor = conn_prep.executar(sql_final, binds)
 
@@ -72,6 +72,7 @@ def exportar_lotes_paralelo(
         arraysize=arraysize,
         arquivo_config=arquivo_config,
     ) as sessao:
+        sql_base = sessao._resolver_sql(consulta_sql)
         executor = ThreadPoolExecutor(max_workers=max_workers)
         futuros = {
             executor.submit(_processar_lote, idx, lote): idx
