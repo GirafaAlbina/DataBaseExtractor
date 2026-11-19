@@ -2,8 +2,8 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Any
 import pandas as pd
-from ._session import SessaoExtracao
-from ._sql_parser import preparar_sql_e_binds
+from .session import SessaoExtracao
+from .query import preparar_sql_e_binds
 from .output import exportar_parquet
 
 

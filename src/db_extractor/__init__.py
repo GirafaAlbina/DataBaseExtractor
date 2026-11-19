@@ -6,14 +6,14 @@ from .extractor import (
     consultar_dataframe_direto
 )
 from ._version import __version__, __author__, __title__, __description__
-from .credentials import (
+from .credential import (
     cadastrar_credencial,
     alterar_senha,
     remover_credencial,
     listar_credenciais
 )
 from .parallel import exportar_lotes_paralelo
-from ._session import abrir_sessao, SessaoExtracao
+from .session import abrir_sessao, SessaoExtracao
 
 
 __all__ = [

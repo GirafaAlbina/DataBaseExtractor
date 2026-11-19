@@ -1,3 +1,4 @@
+import pandas as pd
 import polars as pl
 import pyarrow.parquet as pq
 
@@ -8,10 +9,8 @@ def aplicar_downcasting_polars(df: pl.DataFrame) -> pl.DataFrame:
     n_linhas = len(df)
 
     for col, dtype in df.schema.items():
-        # Compacta inteiros e floats para o menor tipo seguro (ex: Int64 -> Int32/Int16)
         if dtype.is_numeric():
             expressoes.append(pl.col(col).shrink_dtype())
-        # Converte strings de baixa cardinalidade (< 5% únicos) para Categorical
         elif dtype == pl.String and n_linhas > 0:
             if df[col].n_unique() / n_linhas < 0.05:
                 expressoes.append(pl.col(col).cast(pl.Categorical))
@@ -19,11 +18,12 @@ def aplicar_downcasting_polars(df: pl.DataFrame) -> pl.DataFrame:
     return df.with_columns(expressoes) if expressoes else df
 
 
-def exportar_parquet_polars(
+def exportar_parquet(
     chunks,
     arquivo_saida: str,
-    compression: str = "zstd",
+    compression: str = "snappy",
     downcast: bool = True,
+    colunas: list[str] | None = None,
 ) -> int:
     writer = None
     schema_fixo = None
@@ -31,11 +31,23 @@ def exportar_parquet_polars(
 
     try:
         for chunk in chunks:
-            # 'chunk' pode ser a lista de tuplas direto de cursor.fetchmany()
-            if not chunk:
+            if chunk is None:
                 continue
 
-            df = pl.DataFrame(chunk, orient="row")
+            # Converte o chunk para pl.DataFrame independente da origem
+            if isinstance(chunk, pl.DataFrame):
+                if chunk.is_empty():
+                    continue
+                df = chunk
+            elif isinstance(chunk, pd.DataFrame):
+                if chunk.empty:
+                    continue
+                df = pl.from_pandas(chunk)
+            else:
+                # Lista de tuplas/linhas direto de cursor.fetchmany()
+                if not chunk:
+                    continue
+                df = pl.DataFrame(chunk, schema=colunas, orient="row")
 
             if downcast:
                 df = aplicar_downcasting_polars(df)
@@ -51,7 +63,6 @@ def exportar_parquet_polars(
                     compression=compression,
                 )
             else:
-                # Garante compatibilidade de schema entre lotes (ex: colunas nulas em um chunk)
                 table = table.cast(schema_fixo, safe=False)
 
             writer.write_table(table)

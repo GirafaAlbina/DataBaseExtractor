@@ -177,7 +177,7 @@ def exportar_consulta_direto(
     nome_planilha="Dados",  Nome da planilha base, para arquivos xlsx
     compression="snappy",   Compressão parquet
     monitorar=True,         Habilitar progresso True, False
-    banco_alias=None        Alias customizado associado a credencial no cofre
+    banco_alias=None        Alias do banco associado a credencial no cofre
 )
 def consultar_dataframe_direto(
     host,                   *Host/IP do servidor de banco
@@ -189,7 +189,7 @@ def consultar_dataframe_direto(
     chunksize=None,         Extração por chunks
     dataframe="pandas",     Biblioteca de retorno: 'pandas' ou 'polars'
     monitorar=True,         Habilitar progresso True, False
-    banco_alias=None        Alias customizado associado a credencial no cofre
+    banco_alias=None        Alias do banco, 
 )
 ```
 
