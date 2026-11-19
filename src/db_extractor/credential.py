@@ -109,21 +109,32 @@ def listar_credenciais() -> None:
     if config:
         for banco, cfg in config.items():
             banco_upper = banco.strip().upper()
-            usuario = (cfg.get("user") or "").strip()
+            user_padrao = (cfg.get("user") or "").strip()
+            usuarios_cfg = [user_padrao] if user_padrao else []
 
-            if usuario:
-                chave = (banco_upper, usuario.upper())
-                pares_listados.add(chave)
-                reg = mapa_cofre.get(chave)
+            for u in cfg.get("users", []):
+                u_str = str(u).strip()
+                if u_str and u_str not in usuarios_cfg:
+                    usuarios_cfg.append(u_str)
 
-                if reg:
-                    status, atualizado_em, service_name = "Config [OK]", reg["atualizado_em"], reg["servico"]
-                else:
-                    status, atualizado_em, service_name = "Config [Pendente]", "-", servico_composto(banco_upper, usuario)
+            if usuarios_cfg:
+                for idx, usuario in enumerate(usuarios_cfg):
+                    chave = (banco_upper, usuario.upper())
+                    pares_listados.add(chave)
+                    reg = mapa_cofre.get(chave)
 
-                print(f"{banco:<15} {usuario:<18} {status:<20} {atualizado_em:<18} {service_name}")
+                    if reg:
+                        status = f"Config [OK]"
+                        atualizado_em = reg["atualizado_em"]
+                        service_name = reg["servico"]
+                    else:
+                        status = f"Config [Pend]"
+                        atualizado_em = "-"
+                        service_name = servico_composto(banco_upper, usuario)
+
+                    print(f"{banco:<15} {usuario:<18} {status:<22} {atualizado_em:<18} {service_name}")
             else:
-                print(f"{banco:<15} {'(não definido)':<18} {'Config [Sem User]':<20} {'-':<18} {servico_legado(banco_upper)}")
+                print(f"{banco:<15} {'(não definido)':<18} {'Config [Sem User]':<22} {'-':<18} {servico_legado(banco_upper)}")
 
     extras_encontrados = False
     for item in sorted(credenciais_cofre, key=lambda x: (x["banco"], x["usuario"])):

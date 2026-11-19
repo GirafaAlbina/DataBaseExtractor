@@ -48,12 +48,14 @@ class PoolSessao:
     def __init__(
         self,
         banco: str,
+        usuario: str | None = None,
         min_workers: int = 1,
         max_workers: int = 4,
         arraysize: int = 50_000,
         arquivo_config: str | None = None,
     ):
         self.banco = banco
+        self.usuario = usuario
         self.min_workers = min_workers
         self.max_workers = max_workers
         self.arraysize = arraysize
@@ -67,7 +69,11 @@ class PoolSessao:
     def iniciar(self) -> None:
         from .._config import obter_config_banco
         
-        cfg = obter_config_banco(self.banco, arquivo_config=self.arquivo_config)
+        cfg = obter_config_banco(
+            self.banco, 
+            arquivo_config=self.arquivo_config, 
+            usuario=self.usuario
+        )
         porta = int(cfg.get("port", 1521))
         self._motor = "DENODO" if porta == 9996 else "ORACLE"
 

@@ -11,21 +11,20 @@ from ._exceptions import (
 )
 from .utils import ler_senha_com_mascara
 from .connection import testar_conexao
+from .credentials import (
+    listar_cofre_windows,
+    obter_senha_cofre,
+    salvar_senha_cofre,
+    remover_senha_cofre,
+)
 
-# Guarda as configurações já validadas com sucesso (evita retestar em loops)
-_CONFIG_VALIDADAS_CACHE = {}
-# Circuit Breaker: Guarda bancos que falharam na autenticação nesta sessão do Python
-_BANCOS_BLOQUEADOS_SESSAO = set()
+# Cache indexado por (BANCO_UPPER, USUARIO_UPPER)
+_CONFIG_VALIDADAS_CACHE: dict[tuple[str, str], dict] = {}
+# Circuit Breaker indexado por (BANCO_UPPER, USUARIO_UPPER)
+_CREDENCIAIS_BLOQUEADAS_SESSAO: set[tuple[str, str]] = set()
 
 
 def localizar_config() -> str | None:
-    """
-    Tenta localizar o caminho do config.json na ordem:
-    1. Variável de ambiente DB_EXPORT_CONFIG
-    2. Diretório do script em execução
-    3. Diretório de trabalho atual (cwd)
-    Retorna None se não encontrar (sem lançar erro).
-    """
     env_path = os.environ.get("DB_EXPORT_CONFIG")
     if env_path and os.path.exists(env_path):
         return env_path
@@ -64,6 +63,64 @@ def carregar_config(caminho_arquivo=None):
         return {}
 
 
+def _extrair_usuarios_config(cfg: dict) -> tuple[str | None, list[str]]:
+    """Extrai o usuário padrão ('user') e a lista completa ('users') sem duplicatas."""
+    user_padrao = str(cfg["user"]).strip() if cfg.get("user") else None
+    lista_users: list[str] = []
+
+    if user_padrao:
+        lista_users.append(user_padrao)
+
+    for u in cfg.get("users", []):
+        u_str = str(u).strip()
+        if u_str and u_str not in lista_users:
+            lista_users.append(u_str)
+
+    return user_padrao, lista_users
+
+
+def _resolver_usuario_conexao(nome_banco: str, cfg: dict, usuario_informado: str | None) -> str:
+    """Resolve qual usuário utilizar na conexão com suporte a 'user', 'users' e cofre."""
+    if usuario_informado and usuario_informado.strip():
+        return usuario_informado.strip()
+
+    banco_upper = nome_banco.strip().upper()
+    user_padrao, lista_users = _extrair_usuarios_config(cfg)
+
+    # 1. Se existe 'user' padrão no config.json, usa direto
+    if user_padrao:
+        return user_padrao
+
+    # 2. Se existe apenas 1 usuário na lista 'users', usa direto
+    if len(lista_users) == 1:
+        return lista_users[0]
+
+    # 3. Se não há usuário no JSON, verifica o cofre do sistema
+    candidatos = lista_users
+    if not candidatos:
+        candidatos = sorted({
+            r["usuario"]
+            for r in listar_cofre_windows(f"db_extractor_{banco_upper}*")
+            if r["banco"] == banco_upper and r["usuario"]
+        })
+        if len(candidatos) == 1:
+            return candidatos[0]
+
+    # 4. Múltiplos candidatos ou nenhum: exige escolha em terminal interativo
+    if not (sys.stdin and sys.stdin.isatty()):
+        raise SenhaNaoEncontrada(
+            f"Múltiplos ou nenhum usuário configurado para '{nome_banco}' ({candidatos}). "
+            "Informe o parâmetro 'usuario' explicitamente na chamada."
+        )
+
+    if candidatos:
+        print(f"\n[db_extractor] Múltiplos usuários disponíveis para '{nome_banco}': {', '.join(candidatos)}")
+    usuario_digitado = input(f"Digite qual usuário deseja utilizar para '{nome_banco}': ").strip()
+    if not usuario_digitado:
+        raise SenhaNaoEncontrada("O nome de usuário não pode ser vazio.")
+    return usuario_digitado
+
+
 def _pedir_senha_terminal(nome_banco: str, usuario: str, motivo: str = "") -> str:
     if not (sys.stdin and sys.stdin.isatty()):
         raise SenhaNaoEncontrada(
@@ -76,50 +133,45 @@ def _pedir_senha_terminal(nome_banco: str, usuario: str, motivo: str = "") -> st
     else:
         print(f"\n[db_extractor] Nenhuma credencial encontrada no cofre para '{usuario}' ({nome_banco}).")
 
-    prompt = f"Digite a senha para '{usuario}' ({nome_banco}): "
-    senha = ler_senha_com_mascara(prompt)
-
+    senha = ler_senha_com_mascara(f"Digite a senha para '{usuario}' ({nome_banco}): ")
     if not senha.strip():
         raise SenhaNaoEncontrada("A senha fornecida não pode ser vazia.")
 
     return senha
 
 
-def _validar_e_proteger_credencial(nome_banco: str, cfg: dict) -> dict:
-    banco_chave = nome_banco.upper()
+def _validar_e_proteger_credencial(
+    nome_banco: str,
+    cfg: dict,
+    usuario_informado: str | None = None,
+) -> dict:
+    banco_chave = nome_banco.strip().upper()
+    usuario = _resolver_usuario_conexao(nome_banco, cfg, usuario_informado)
+    chave_sessao = (banco_chave, usuario.upper())
 
-    # DISJUNTOR DE SEGURANÇA (Circuit Breaker)
-    # Se este banco já falhou a senha nesta execução, rejeita na hora sem bater no banco!
-    if banco_chave in _BANCOS_BLOQUEADOS_SESSAO:
+    # DISJUNTOR DE SEGURANÇA (Circuit Breaker por Banco + Usuário)
+    if chave_sessao in _CREDENCIAIS_BLOQUEADAS_SESSAO:
         raise CredencialInvalidaError(
-            f"[SEGURANÇA] Chamada para o banco '{nome_banco}' bloqueada nesta sessão.\n"
-            f"A autenticação já falhou anteriormente neste script. A tentativa foi interrompida "
-            f"preventivamente para não bloquear o seu usuário no banco de dados."
+            f"[SEGURANÇA] Chamada para '{usuario}' em '{nome_banco}' bloqueada nesta sessão.\n"
+            f"A autenticação já falhou anteriormente neste script. Tentativa interrompida "
+            f"preventivamente para evitar bloqueio da conta no banco."
         )
 
     # CACHE DE SUCESSO
-    # Se já validou neste mesmo script, retorna a configuração direto sem refazer SELECT 1
-    if banco_chave in _CONFIG_VALIDADAS_CACHE:
-        return _CONFIG_VALIDADAS_CACHE[banco_chave]
+    if chave_sessao in _CONFIG_VALIDADAS_CACHE:
+        return _CONFIG_VALIDADAS_CACHE[chave_sessao]
 
     cfg_final = cfg.copy()
-    usuario = cfg_final.get("user")
+    cfg_final["user"] = usuario
     senha = cfg_final.get("password")
-    service_name = f"db_extractor_{banco_chave}"
-
-    if not usuario:
-        raise SenhaNaoEncontrada(f"Campo 'user' não informado para '{nome_banco}' no config.json.")
-
     origem_config = bool(senha)
+    servico_encontrado = None
 
     if not senha:
-        senha = keyring.get_password(service_name, usuario)
-        if not senha:
-            senha = keyring.get_password("db_extractor", usuario)
-
+        senha, servico_encontrado = obter_senha_cofre(banco_chave, usuario)
         if not senha:
             senha = _pedir_senha_terminal(nome_banco, usuario)
-            keyring.set_password(service_name, usuario, senha)
+            salvar_senha_cofre(banco_chave, usuario, senha)
 
     cfg_final["password"] = senha
 
@@ -127,25 +179,25 @@ def _validar_e_proteger_credencial(nome_banco: str, cfg: dict) -> dict:
     sucesso, erro_credencial, detalhe_erro = testar_conexao(nome_banco, cfg_final)
 
     if sucesso:
-        _CONFIG_VALIDADAS_CACHE[banco_chave] = cfg_final
+        _CONFIG_VALIDADAS_CACHE[chave_sessao] = cfg_final
         return cfg_final
 
     # TRATAMENTO DE ERRO DE CREDENCIAL
     if erro_credencial:
-        try:
-            keyring.delete_password(service_name, usuario)
-        except Exception:
-            pass
+        if servico_encontrado:
+            try:
+                remover_senha_cofre(servico_encontrado, usuario)
+            except Exception:
+                pass
 
         if origem_config:
-            _BANCOS_BLOQUEADOS_SESSAO.add(banco_chave)
+            _CREDENCIAIS_BLOQUEADAS_SESSAO.add(chave_sessao)
             raise CredencialInvalidaError(
                 f"A senha fornecida no config.json para '{usuario}' ({nome_banco}) é INVÁLIDA.\n"
                 f"Detalhe: {detalhe_erro}\n"
-                f"Execução bloqueada nesta sessão para evitar travamento da conta no banco."
+                f"Execução bloqueada nesta sessão para evitar travamento da conta."
             )
 
-        # Concede apenas uma chance interativa de correção no terminal
         nova_senha = _pedir_senha_terminal(
             nome_banco,
             usuario,
@@ -158,30 +210,28 @@ def _validar_e_proteger_credencial(nome_banco: str, cfg: dict) -> dict:
         sucesso_retry, _, detalhe_retry = testar_conexao(nome_banco, cfg_final)
 
         if sucesso_retry:
-            keyring.set_password(service_name, usuario, nova_senha)
-            print(f"[db_extractor] Senha validada com sucesso e salva no cofre do sistema!\n")
-            _CONFIG_VALIDADAS_CACHE[banco_chave] = cfg_final
+            salvar_senha_cofre(banco_chave, usuario, nova_senha)
+            print("[db_extractor] Senha validada com sucesso e salva no cofre do sistema!\n")
+            _CONFIG_VALIDADAS_CACHE[chave_sessao] = cfg_final
             return cfg_final
         else:
-            # Falhou pela segunda vez: arma o disjuntor para todas as próximas chamadas deste script
-            _BANCOS_BLOQUEADOS_SESSAO.add(banco_chave)
+            _CREDENCIAIS_BLOQUEADAS_SESSAO.add(chave_sessao)
             raise CredencialInvalidaError(
                 f"Segunda tentativa de autenticação falhou para '{usuario}' em '{nome_banco}'.\n"
                 f"Detalhe: {detalhe_retry}\n"
-                f"O banco '{nome_banco}' foi BLOQUEADO para todas as próximas consultas desta execução "
-                f"para proteger seu usuário contra bloqueio."
+                f"O par '{usuario}' @ '{nome_banco}' foi BLOQUEADO nesta execução."
             )
 
     raise ConnectionError(f"Falha de conexão com o banco '{nome_banco}': {detalhe_erro}")
 
 
-def obter_config_banco(nome_banco, arquivo_config=None):
+def obter_config_banco(nome_banco, arquivo_config=None, usuario: str | None = None):
     config = carregar_config(caminho_arquivo=arquivo_config)
     banco_procurado = nome_banco.strip().upper()
 
     for nome_config, cfg in config.items():
         if nome_config.upper() == banco_procurado:
-            return _validar_e_proteger_credencial(nome_config, cfg)
+            return _validar_e_proteger_credencial(nome_config, cfg, usuario_informado=usuario)
 
     origem = f"arquivo '{arquivo_config}'" if arquivo_config else "config.json ausente ou banco não declarado"
     raise BancoNaoEncontrado(f"Banco '{nome_banco}' não localizado nas configurações ({origem}).")
@@ -207,25 +257,20 @@ def montar_e_validar_config_direta(
     database_ou_service: str,
     banco_alias: str | None = None,
 ) -> tuple[str, dict]:
-    """
-    Monta a configuração em memória e passa pelo circuito de validação/Keyring.
-    Retorna (alias, cfg_validada).
-    """
     tipo = inferir_tipo_banco_por_porta(porta)
-    
     host_limpo = host.split(".")[0].replace("-", "_").upper()
     alias = (banco_alias or f"{tipo}_{host_limpo}_{database_ou_service.upper()}").strip().upper()
 
     cfg = {
         "user": usuario,
         "host": host,
-        "port": int(porta)
+        "port": int(porta),
     }
 
     if tipo == "ORACLE":
         cfg["service"] = database_ou_service
-    else:  # DENODO
+    else:
         cfg["database"] = database_ou_service
 
-    cfg_validada = _validar_e_proteger_credencial(alias, cfg)
+    cfg_validada = _validar_e_proteger_credencial(alias, cfg, usuario_informado=usuario)
     return alias, cfg_validada

@@ -7,7 +7,7 @@ from .vault import (
     remover_senha_cofre
 )
 from .resolver import (
-    obter_usuario_config,
+    obter_usuarios_config,
     resolver_usuario,
     confirmar_acao
 )
@@ -19,7 +19,7 @@ __all__ = [
     "obter_senha_cofre",
     "salvar_senha_cofre",
     "remover_senha_cofre",
-    "obter_usuario_config",
+    "obter_usuarios_config",
     "resolver_usuario",
     "confirmar_acao"
 ]

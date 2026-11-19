@@ -9,6 +9,7 @@ from .output import exportar_parquet
 
 def exportar_lotes_paralelo(
     banco: str,
+    usuario: str | None,
     consulta_sql: str,
     lotes: list[dict[str, Any]],
     diretorio_saida: str,
@@ -21,10 +22,7 @@ def exportar_lotes_paralelo(
     nome_lote_fn: Callable[[int, dict], str] | None = None,
     arquivo_config: str | None = None,
 ) -> list[str]:
-    """
-    Executa múltiplos lotes em paralelo usando um ConnectionPool dedicado
-    e cursores preparados por thread, com política Fail-Fast.
-    """
+    
     os.makedirs(diretorio_saida, exist_ok=True)
     arquivos_gerados: list[str] = []
 
@@ -67,6 +65,7 @@ def exportar_lotes_paralelo(
 
     with SessaoExtracao(
         banco=banco,
+        usuario=usuario,
         min_workers=max_workers,
         max_workers=max_workers,
         arraysize=arraysize,

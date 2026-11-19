@@ -3,19 +3,23 @@ from .._exceptions import SenhaNaoEncontrada
 from .vault import listar_cofre_windows
 
 
-def obter_usuario_config(banco_upper: str) -> str | None:
+def obter_usuarios_config(banco_upper: str) -> tuple[str | None, list[str]]:
     from .._config import carregar_config
 
     try:
         config = carregar_config()
         for nome, cfg in config.items():
             if nome.strip().upper() == banco_upper:
-                user_cfg = cfg.get("user")
-                if user_cfg and str(user_cfg).strip():
-                    return str(user_cfg).strip()
+                user_padrao = str(cfg["user"]).strip() if cfg.get("user") else None
+                lista_users = [user_padrao] if user_padrao else []
+                for u in cfg.get("users", []):
+                    u_str = str(u).strip()
+                    if u_str and u_str not in lista_users:
+                        lista_users.append(u_str)
+                return user_padrao, lista_users
     except Exception:
         pass
-    return None
+    return None, []
 
 
 def resolver_usuario(banco_upper: str, usuario_informado: str | None, operacao: str) -> str:
@@ -27,28 +31,26 @@ def resolver_usuario(banco_upper: str, usuario_informado: str | None, operacao: 
             f"O parâmetro 'usuario' é obrigatório para '{banco_upper}' em modo não interativo."
         )
 
-    usuario_cfg = obter_usuario_config(banco_upper)
-    if usuario_cfg:
+    user_padrao, lista_users = obter_usuarios_config(banco_upper)
+
+    if user_padrao:
         resp = input(
-            f"[db_extractor] O banco '{banco_upper}' está configurado com o usuário '{usuario_cfg}' no config.json.\n"
-            f"Deseja utilizar '{usuario_cfg}' para {operacao}? (S/n): "
+            f"[db_extractor] O banco '{banco_upper}' está configurado com o usuário padrão '{user_padrao}'.\n"
+            f"Deseja utilizar '{user_padrao}' para {operacao}? (S/n): "
         ).strip().lower()
 
         if resp in ("", "s", "sim", "y", "yes"):
-            return usuario_cfg
+            return user_padrao
 
-        novo_user = input(f"Digite o nome de usuário para '{banco_upper}': ").strip()
-        if not novo_user:
-            raise SenhaNaoEncontrada("O nome de usuário não pode ser vazio.")
-        return novo_user
-
-    salvos = [
+    # Junta sugestões do 'users' no JSON com o que já existe no cofre do Windows
+    salvos_cofre = [
         r["usuario"]
         for r in listar_cofre_windows(f"db_extractor_{banco_upper}*")
         if r["banco"] == banco_upper and r["usuario"]
     ]
-    if salvos:
-        print(f"[db_extractor] Usuários encontrados no cofre para '{banco_upper}': {', '.join(sorted(set(salvos)))}")
+    sugestoes = sorted(set(lista_users + salvos_cofre))
+    if sugestoes:
+        print(f"[db_extractor] Usuários disponíveis/cadastrados para '{banco_upper}': {', '.join(sugestoes)}")
 
     usuario_digitado = input(f"Digite o nome de usuário para '{banco_upper}': ").strip()
     if not usuario_digitado:

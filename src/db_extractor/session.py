@@ -30,6 +30,7 @@ class SessaoExtracao:
     def __init__(
         self,
         banco: str,
+        usuario: str | None = None,
         min_workers: int = 1,
         max_workers: int = 4,
         arraysize: int = 50_000,
@@ -38,6 +39,7 @@ class SessaoExtracao:
         self.banco = normalizar_banco(banco)
         self._gerenciador_pool = PoolSessao(
             banco=self.banco,
+            usuario=usuario,
             min_workers=min_workers,
             max_workers=max_workers,
             arraysize=arraysize,
@@ -187,6 +189,7 @@ class SessaoExtracao:
 
 def abrir_sessao(
     banco: str,
+    usario: str | None = None,
     min_workers: int = 1,
     max_workers: int = 4,
     arraysize: int = 50_000,
@@ -195,6 +198,7 @@ def abrir_sessao(
     """Abre um gerenciador de contexto com Pool de Conexões e Cache de Cursores Preparados."""
     return SessaoExtracao(
         banco=banco,
+        usuario=usario,
         min_workers=min_workers,
         max_workers=max_workers,
         arraysize=arraysize,

@@ -48,6 +48,7 @@ def _monitorar_chunks(chunks):
 
 def exportar_consulta(
     banco,
+    usuario: str | None,
     consulta,
     saida,
     separador=DEFAULT_CSV_SEPARATOR,
@@ -58,25 +59,6 @@ def exportar_consulta(
     monitorar=True,
     arquivo_config=None
 ):
-    """
-    Executa uma consulta SQL/VQL e exporta o resultado.
-
-    Parameters
-    ----------
-    banco : str                 - Nome do banco cadastrado no config.json.
-    consulta : str              - Caminho do arquivo .sql ou .vql.
-    saida : str                 - Arquivo de saída (.csv, .xlsx ou .parquet).
-    separador : str             - Separador para arquivos CSV.
-    chunksize : int | None      - Tamanho dos lotes para leitura.
-    parametros : dict | None    - Parâmetros da consulta.
-    nome_planilha : str         - Nome base da planilha Excel.
-    monitorar : bool            - Exibir progresso da execução.
-    arquivo_config : str | None - Caminho de um JSON de configuração alternativo.
-
-    Returns
-    -------
-    ExportResult
-    """
 
     banco = normalizar_banco(banco)
     consulta = normalizar_consulta(consulta)
@@ -95,7 +77,7 @@ def exportar_consulta(
 
     try:
         # Repassa arquivo_config para a resolução
-        cfg = obter_config_banco(banco, arquivo_config=arquivo_config)
+        cfg = obter_config_banco(banco, arquivo_config=arquivo_config, usuario=usuario)
         engine = criar_conexao(cfg)
         sql = carregar_consulta(consulta)
         chunks = executar_consulta(
@@ -274,6 +256,7 @@ def exportar_consulta_direto(
 
 def consultar_dataframe(
     banco,
+    usuario: str | None,
     consulta,
     parametros=None,
     chunksize=None,
@@ -281,23 +264,6 @@ def consultar_dataframe(
     monitorar=True,
     arquivo_config=None
 ):
-    """
-    Executa uma consulta SQL/VQL e retorna DataFrame Pandas ou Polars.
-
-    Parameters
-    ----------
-    banco : str                 - Nome do banco.
-    consulta : str              - Arquivo SQL ou VQL.
-    parametros : dict | None    - Parâmetros da consulta.
-    chunksize : int | None      - Tamanho dos lotes.
-    dataframe : str             - 'pandas' ou 'polars'.
-    monitorar : bool            - Exibir progresso da execução.
-    arquivo_config : str | None - Caminho de um JSON de configuração alternativo.
-
-    Returns
-    -------
-    pandas.DataFrame | polars.DataFrame | Generator
-    """
 
     banco = normalizar_banco(banco)
     consulta = normalizar_consulta(consulta)
@@ -312,7 +278,7 @@ def consultar_dataframe(
 
     inicio = perf_counter()
     # Repassa arquivo_config para a resolução
-    cfg = obter_config_banco(banco, arquivo_config=arquivo_config)
+    cfg = obter_config_banco(banco, arquivo_config=arquivo_config, usuario=usuario)
     db_engine = criar_conexao(cfg)
 
     try:
