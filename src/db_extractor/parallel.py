@@ -1,15 +1,14 @@
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Callable, Any
-import pandas as pd
-from .session import SessaoExtracao
-from .query import preparar_sql_e_binds
+from typing import Any, Callable
+
 from .output import exportar_parquet
+from .query import preparar_sql_e_binds
+from .session import SessaoExtracao
 
 
 def exportar_lotes_paralelo(
     banco: str,
-    usuario: str | None,
     consulta_sql: str,
     lotes: list[dict[str, Any]],
     diretorio_saida: str,
@@ -21,8 +20,9 @@ def exportar_lotes_paralelo(
     downcast: bool = True,
     nome_lote_fn: Callable[[int, dict], str] | None = None,
     arquivo_config: str | None = None,
+    usuario: str | None = None,
 ) -> list[str]:
-    
+
     os.makedirs(diretorio_saida, exist_ok=True)
     arquivos_gerados: list[str] = []
 
@@ -37,14 +37,14 @@ def exportar_lotes_paralelo(
         sql_final, binds = preparar_sql_e_binds(sql_base, params_lote)
         conn_prep = sessao.adquirir_conexao()
         cursor = conn_prep.executar(sql_final, binds)
+        colunas = [desc[0] for desc in cursor.description]
 
         def _gerador_chunks():
-            colunas = [desc[0] for desc in cursor.description]
             while True:
                 linhas = cursor.fetchmany(chunksize)
                 if not linhas:
                     break
-                yield pd.DataFrame(linhas, columns=colunas)
+                yield linhas  # Envia tuplas puras direto para Polars/Arrow (zero Pandas)
 
         try:
             exportar_parquet(
@@ -52,10 +52,10 @@ def exportar_lotes_paralelo(
                 arquivo_saida=caminho_parquet,
                 compression=compression,
                 downcast=downcast,
+                colunas=colunas,
             )
             return caminho_parquet
         except Exception:
-            # Limpa o arquivo parcial/corrompido deste lote imediatamente
             if os.path.exists(caminho_parquet):
                 try:
                     os.remove(caminho_parquet)
@@ -65,13 +65,13 @@ def exportar_lotes_paralelo(
 
     with SessaoExtracao(
         banco=banco,
-        usuario=usuario,
         min_workers=max_workers,
         max_workers=max_workers,
         arraysize=arraysize,
         arquivo_config=arquivo_config,
+        usuario=usuario,
     ) as sessao:
-        sql_base = sessao._resolver_sql(consulta_sql)
+        sql_base = sessao.resolver_sql(consulta_sql)
         executor = ThreadPoolExecutor(max_workers=max_workers)
         futuros = {
             executor.submit(_processar_lote, idx, lote): idx
@@ -80,10 +80,9 @@ def exportar_lotes_paralelo(
 
         try:
             for futuro in as_completed(futuros):
-                caminho = futuro.result()  # Propaga exceção imediatamente se falhar
+                caminho = futuro.result()
                 arquivos_gerados.append(caminho)
         except Exception as erro:
-            # FAIL-FAST: Aborta todos os lotes que ainda não iniciaram
             executor.shutdown(wait=False, cancel_futures=True)
             raise RuntimeError(
                 f"Execução paralela abortada (Fail-Fast). Lotes pendentes cancelados. Motivo: {erro}"

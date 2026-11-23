@@ -3,11 +3,10 @@ from time import perf_counter
 import pandas as pd
 
 from ._constants import DEFAULT_CSV_SEPARATOR, DEFAULT_SHEET_NAME
-from .query import preparar_sql_e_binds
 from .connection import ConexaoPreparada, PoolSessao
 from .models import ExportResult
 from .output import exportar_csv, exportar_parquet, exportar_xlsx
-from .query import carregar_consulta
+from .query import carregar_consulta, preparar_sql_e_binds
 from .utils import (
     imprimir_dataframe,
     imprimir_exportacao,
@@ -30,20 +29,20 @@ class SessaoExtracao:
     def __init__(
         self,
         banco: str,
-        usuario: str | None = None,
         min_workers: int = 1,
         max_workers: int = 4,
         arraysize: int = 50_000,
         arquivo_config: str | None = None,
+        usuario: str | None = None,
     ):
         self.banco = normalizar_banco(banco)
         self._gerenciador_pool = PoolSessao(
             banco=self.banco,
-            usuario=usuario,
             min_workers=min_workers,
             max_workers=max_workers,
             arraysize=arraysize,
             arquivo_config=arquivo_config,
+            usuario=usuario,
         )
 
     def __enter__(self) -> "SessaoExtracao":
@@ -189,18 +188,18 @@ class SessaoExtracao:
 
 def abrir_sessao(
     banco: str,
-    usario: str | None = None,
     min_workers: int = 1,
     max_workers: int = 4,
     arraysize: int = 50_000,
     arquivo_config: str | None = None,
+    usuario: str | None = None,
 ) -> SessaoExtracao:
     """Abre um gerenciador de contexto com Pool de Conexões e Cache de Cursores Preparados."""
     return SessaoExtracao(
         banco=banco,
-        usuario=usario,
         min_workers=min_workers,
         max_workers=max_workers,
         arraysize=arraysize,
         arquivo_config=arquivo_config,
+        usuario=usuario,
     )

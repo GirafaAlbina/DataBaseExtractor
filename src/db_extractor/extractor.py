@@ -48,7 +48,6 @@ def _monitorar_chunks(chunks):
 
 def exportar_consulta(
     banco,
-    usuario: str | None,
     consulta,
     saida,
     separador=DEFAULT_CSV_SEPARATOR,
@@ -57,7 +56,8 @@ def exportar_consulta(
     nome_planilha=DEFAULT_SHEET_NAME,
     compression: str = "snappy",
     monitorar=True,
-    arquivo_config=None
+    arquivo_config=None,
+    usuario: str | None=None
 ):
 
     banco = normalizar_banco(banco)
@@ -256,13 +256,13 @@ def exportar_consulta_direto(
 
 def consultar_dataframe(
     banco,
-    usuario: str | None,
     consulta,
     parametros=None,
     chunksize=None,
     dataframe="pandas",
     monitorar=True,
-    arquivo_config=None
+    arquivo_config=None,
+    usuario: str | None=None
 ):
 
     banco = normalizar_banco(banco)
