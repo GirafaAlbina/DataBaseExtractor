@@ -151,7 +151,8 @@ def exportar_consulta(
     nome_planilha="Dados",  Nome da planliha base, para arquivos xlsx
     compression="snappy",   Compressão parquet
     monitorar=True,         Habilitar Progresso True, False
-    arquivo_config=None     Caminho de arquivo json do config
+    arquivo_config=None,    Caminho de arquivo json do config
+    usuario=None            Usuário específico declarado em config
 )
 def consultar_dataframe(
     banco,                  *Nome do banco no config
@@ -160,7 +161,8 @@ def consultar_dataframe(
     parametros=None,        Parâmetros da consulta SQL
     dataframe="pandas",     Biblioteca que retorna o df polars, pandas
     monitorar=True,         Habilitar Progresso True, False
-    arquivo_config=None     Caminho de arquivo json do config
+    arquivo_config=None,    Caminho de arquivo json do config
+    usuario=None            Usuário específico declarado em config
 )
 
 # Funções com passagem direta dos parâmetros da conexão, sem config.json
@@ -225,18 +227,19 @@ def listar_credenciais()
 
 ```python
 def exportar_lotes_paralelo(
-    banco,                      *Nome do banco no config
-    consulta_sql,               *String SQL ou caminho do arquivo .sql
-    lotes,                      *Lista com os parâmetros de cada lote
-    diretorio_saida,            *Pasta de destino dos arquivos .parquet
-    prefixo_arquivo="lote",     Prefixo padrão dos arquivos gerados
-    max_workers=4,              Número de threads e conexões simultâneas
-    chunksize=100000,           Tamanho do lote em memória para escrita
-    arraysize=50000,            Buffer de rede do cursor
-    compression="zstd",         Compressão Parquet
-    downcast=True,              Compactação automática de tipos numéricos e categóricos
-    nome_lote_fn=None,          Função customizada para nomear cada arquivo: fn(indice, params)
-    arquivo_config=None         Caminho alternativo de arquivo json de configuração
+    banco,                   *Nome do banco no config
+    consulta_sql,            *String SQL ou caminho do arquivo .sql
+    lotes,                   *Lista com os parâmetros de cada lote
+    diretorio_saida,         *Pasta de destino dos arquivos .parquet
+    prefixo_arquivo="lote",  Prefixo padrão dos arquivos gerados
+    max_workers=4,           Número de threads e conexões simultâneas
+    chunksize=100000,        Tamanho do lote em memória para escrita
+    arraysize=50000,         Buffer de rede do cursor
+    compression="zstd",      Compressão Parquet
+    downcast=True,           Compactação automática de tipos numéricos e categóricos
+    nome_lote_fn=None,        Função customizada para nomear cada arquivo: fn(indice, params)
+    arquivo_config=None,      Caminho alternativo de arquivo json de configuração
+    usuario=None              Usuário específico declarado em config
 )
 ```
 

@@ -10,12 +10,12 @@ from ._constants import DEFAULT_SHEET_NAME, DEFAULT_CSV_SEPARATOR
 
 # db_extractor/folder
 from .connection import criar_conexao
-from .query import carregar_consulta, executar_consulta
+from .query import executar_consulta, resolver_sql
 from .output import exportar_csv, exportar_xlsx, exportar_parquet
 from .models import ExportResult
-from .utils import (normalizar_banco, normalizar_consulta, normalizar_saida, 
+from .utils import (normalizar_banco, normalizar_saida, 
                     normalizar_nome_planilha, normalizar_chunksize, validar_saida,
-                    validar_consulta, validar_chunksize, validar_nome_planilha,
+                    validar_chunksize, validar_nome_planilha,
                     resolver_saida, imprimir_exportacao, imprimir_chunk,
                     memoria_dataframe, imprimir_dataframe)
 
@@ -61,13 +61,11 @@ def exportar_consulta(
 ):
 
     banco = normalizar_banco(banco)
-    consulta = normalizar_consulta(consulta)
     saida = normalizar_saida(saida)
     saida = resolver_saida(saida)
     chunksize = normalizar_chunksize(chunksize)
     nome_planilha = normalizar_nome_planilha(nome_planilha)
 
-    validar_consulta(consulta)
     validar_saida(saida)
     validar_chunksize(chunksize)
     validar_nome_planilha(nome_planilha)
@@ -79,7 +77,7 @@ def exportar_consulta(
         # Repassa arquivo_config para a resolução
         cfg = obter_config_banco(banco, arquivo_config=arquivo_config, usuario=usuario)
         engine = criar_conexao(cfg)
-        sql = carregar_consulta(consulta)
+        sql = resolver_sql(consulta)
         chunks = executar_consulta(
             engine=engine,
             consulta=sql,
@@ -175,13 +173,11 @@ def exportar_consulta_direto(
     -------
     ExportResult
     """
-    consulta = normalizar_consulta(consulta)
     saida = normalizar_saida(saida)
     saida = resolver_saida(saida)
     chunksize = normalizar_chunksize(chunksize)
     nome_planilha = normalizar_nome_planilha(nome_planilha)
 
-    validar_consulta(consulta)
     validar_saida(saida)
     validar_chunksize(chunksize)
     validar_nome_planilha(nome_planilha)
@@ -198,7 +194,7 @@ def exportar_consulta_direto(
             banco_alias=banco_alias,
         )
         engine = criar_conexao(cfg)
-        sql = carregar_consulta(consulta)
+        sql = resolver_sql(consulta)
         chunks = executar_consulta(
             engine=engine,
             consulta=sql,
@@ -266,10 +262,8 @@ def consultar_dataframe(
 ):
 
     banco = normalizar_banco(banco)
-    consulta = normalizar_consulta(consulta)
     chunksize = normalizar_chunksize(chunksize)
 
-    validar_consulta(consulta)
     validar_chunksize(chunksize)
 
     dataframe = dataframe.lower()
@@ -282,7 +276,7 @@ def consultar_dataframe(
     db_engine = criar_conexao(cfg)
 
     try:
-        sql = carregar_consulta(consulta)
+        sql = resolver_sql(consulta)
         if chunksize is None:
             resultado = executar_consulta(
                 engine=db_engine,
@@ -367,10 +361,8 @@ def consultar_dataframe_direto(
     Executa uma consulta SQL/VQL conectando diretamente aos parâmetros informados
     (sem dependência de config.json) e retorna um DataFrame (pandas ou polars).
     """
-    consulta = normalizar_consulta(consulta)
     chunksize = normalizar_chunksize(chunksize)
 
-    validar_consulta(consulta)
     validar_chunksize(chunksize)
 
     dataframe = dataframe.lower()
@@ -388,7 +380,7 @@ def consultar_dataframe_direto(
     db_engine = criar_conexao(cfg)
 
     try:
-        sql = carregar_consulta(consulta)
+        sql = resolver_sql(consulta)
         if chunksize is None:
             resultado = executar_consulta(
                 engine=db_engine,

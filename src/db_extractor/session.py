@@ -6,7 +6,7 @@ from ._constants import DEFAULT_CSV_SEPARATOR, DEFAULT_SHEET_NAME
 from .connection import ConexaoPreparada, PoolSessao
 from .models import ExportResult
 from .output import exportar_csv, exportar_parquet, exportar_xlsx
-from .query import carregar_consulta, preparar_sql_e_binds
+from .query import preparar_sql_e_binds, resolver_sql
 from .utils import (
     imprimir_dataframe,
     imprimir_exportacao,
@@ -57,12 +57,7 @@ class SessaoExtracao:
         return self._gerenciador_pool.adquirir_conexao()
 
     def resolver_sql(self, consulta: str) -> str:
-        """Aceita caminho de arquivo .sql/.vql ou string SQL direta."""
-        if os.path.isfile(consulta) or consulta.strip().lower().endswith((".sql", ".vql")):
-            arq = normalizar_consulta(consulta)
-            validar_consulta(arq)
-            return carregar_consulta(arq)
-        return consulta
+        return resolver_sql(consulta)
 
     def consultar_dataframe(
         self,
